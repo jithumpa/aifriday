@@ -1,53 +1,33 @@
-Meeting notes - 2026-03-08
+Governance Steering Committee - 2026-03-10
 
-- Jane: packaging supplier audit delayed due to vendor availability.
-- John: supply chain data ingestion blocked by missing API keys.
-- Enrique: AI project for predictive analytics started, initial data collection phase.
-- Ivan Christo: DEI initiative for gender equality launched in TCS offices.
-- Aswa: Water efficiency program monitoring initiated.
-- Action: Anna to confirm training completion records.
+Attendees: Maria Garcia, James Wilson, Sarah Chen (CFO), Raj Patel (CTO), Linda Park (CHRO)
 
-Meeting notes - 2025-06-01
-- Jane: packaging supplier audit delayed due to vendor availability.
-- John: supply chain data ingestion blocked by missing API keys.
-- Enrique: AI project for demand forecasting started, initial data collection phase.
-- Ivan Christo: DEI training session scheduled for next week.
-- Aswa: Water efficiency program on track.
-- Action: Anna to confirm training completion records.
+- Maria Garcia: Renewable Energy Transition (INIT-SUS-1) at 45% completion. Solar panel installation in 3 EU facilities on track. Wind power vendor contract for APAC facilities pending legal review.
+- James Wilson: AI Ready Workforce Program (INIT-PEO-1) at 30% completion. Pilot AI literacy training completed for 120 employees. Positive feedback but need to scale to remaining 800 staff.
+- Sarah Chen: Q1 sustainability budget utilization at 62%. Recommends accelerating renewable energy spend before fiscal year-end. Carbon credit costs rising 15% YoY.
+- Raj Patel: AI tools evaluation complete — selected 3 platforms for workforce training. Integration with existing LMS blocked by SSO configuration.
+- Linda Park: Gender balance declined to 47% globally. Urgent need to review hiring pipeline. AI Ready program should include diversity lens.
+- DECISION: Approve additional $2M for solar installations in North America.
+- DECISION: Extend AI literacy training deadline to September to ensure quality.
+- BLOCKER: Wind power vendor contract stuck in legal for 3 weeks. Escalate to General Counsel.
+- BLOCKER: LMS integration for AI training blocked by SSO — IT team to prioritize.
+- ACTION: Maria to finalize North America solar vendor shortlist by March 20.
+- ACTION: James to present scaled AI training plan to leadership by March 25.
+- ACTION: Linda to propose gender balance improvement plan with hiring targets by April 1.
+- ACTION: Raj to resolve LMS/SSO blocker with IT by March 17.
+- RISK: If wind power contracts delayed beyond April, Q2 sustainability targets will be missed.
+- RISK: Without LMS integration, AI training cannot scale beyond pilot group.
 
-Meeting notes - 2025-06-08
-- John: AI project for demand forecasting started, initial data collection phase.
-- Anna: DEI training session scheduled for next week.
-- Mark: Water efficiency program on track.
-- Enrique: Packaging supplier audit process improvement discussion.
-- Ivan Christo: Gender equality initiative receives additional funding.
+Weekly Sync - 2026-03-03
 
-Meeting notes - 2025-06-15
-- Jane: Packaging supplier audit rescheduled, new vendor identified.
-- John: API keys received, supply chain data ingestion resumed.
-- Anna: Completed DEI training for HR team.
-- Enrique: AI model for demand forecasting shows promising results.
-- Ivan Christo: Gender equality initiative progress report shared with leadership.
+Attendees: Maria Garcia, James Wilson, Raj Patel
 
-Meeting notes - 2025-06-22
-- John: AI model for demand forecasting shows promising results.
-- Anna: Gender equality initiative launched in TCS offices.
-- Mark: Water efficiency program faces minor delays.
-- Enrique: DEI initiative receives positive feedback from employees.
-- Ivan Christo: Packaging supplier audit completed, report pending.
-
-Meeting notes - 2025-06-29
-- Jane: Packaging supplier audit completed, report pending.
-- John: AI project enters model validation phase.
-- Anna: DEI initiative receives positive feedback from employees.
-- Enrique: AI project pilot results under review.
-- Ivan Christo: Water efficiency program back on schedule.
-
-Meeting notes - 2025-07-06
-- John: AI model deployed for pilot in supply chain.
-- Anna: Gender equality initiative progress report shared with leadership.
-- Jane: Packaging supplier audit report submitted.
-- Enrique: DEI training extended to Europe region.
+- Maria: CO2 emissions in Europe trending up — 1180 tonnes last week. Need to investigate root cause.
+- James: Identified AI champions in each department for the workforce program. 15 volunteers confirmed.
+- Raj: Data pipeline for sustainability metrics automated. Real-time dashboards now possible.
+- ACTION: Maria to request facility-level emissions breakdown from operations.
+- ACTION: James to schedule AI champion kickoff meeting for next week.
+- NOTE: Next governance committee meeting moved to March 17 due to executive travel.
 - Ivan Christo: Packaging supplier contract renegotiated for sustainability.
 
 Meeting notes - 2025-07-13

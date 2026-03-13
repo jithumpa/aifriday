@@ -108,6 +108,33 @@ body {
     }
 }
 
+.ask-ai-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border: 1px solid #c7d2fe;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    color: #4f46e5;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    .material-icons {
+        font-size: 14px;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border-color: #6366f1;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+}
+
 .badge {
     display: inline-flex;
     align-items: center;
@@ -570,9 +597,20 @@ app-dashboard {
         border-radius: var(--radius-lg);
         padding: 20px;
         display: flex;
-        align-items: center;
-        gap: 16px;
+        flex-direction: column;
+        gap: 12px;
         box-shadow: var(--shadow);
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ask-ai-btn {
+            width: 100%;
+            justify-content: center;
+        }
 
         &.warning {
             border-left: 4px solid var(--warning);
@@ -1544,6 +1582,10 @@ app-dashboard {
         margin-top: 16px;
         padding-top: 12px;
         border-top: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
     }
 
     .data-source {

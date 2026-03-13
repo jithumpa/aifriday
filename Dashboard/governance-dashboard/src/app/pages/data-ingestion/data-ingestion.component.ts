@@ -15,12 +15,12 @@ import { ApiService } from '../../services/api.service';
       </header>
 
       <div class="grid grid-2">
-        <!-- ESG Metrics Upload -->
+        <!-- Sustainability Metrics Upload -->
         <div class="card upload-card">
           <div class="upload-icon esg">
             <span class="material-icons">eco</span>
           </div>
-          <h3>ESG Metrics</h3>
+          <h3>Sustainability Metrics</h3>
           <p>Upload environmental, social, and governance metrics</p>
           <div class="file-format">
             <strong>Required columns:</strong> date, org_unit, metric_name, value, unit
@@ -44,12 +44,12 @@ import { ApiService } from '../../services/api.service';
           </div>
         </div>
 
-        <!-- DEI Metrics Upload -->
+        <!-- People Metrics Upload -->
         <div class="card upload-card">
           <div class="upload-icon dei">
             <span class="material-icons">diversity_3</span>
           </div>
-          <h3>DEI Metrics</h3>
+          <h3>People Metrics</h3>
           <p>Upload diversity, equity, and inclusion metrics</p>
           <div class="file-format">
             <strong>Required columns:</strong> date, org_unit, metric_name, value, unit

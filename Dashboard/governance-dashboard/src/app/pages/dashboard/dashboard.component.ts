@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { HealthResponse, LatestResponse, ESGAnalyticsResponse, SampleInitiative } from '../../models/api.models';
 import { Chart, registerables } from 'chart.js';
@@ -29,54 +29,68 @@ interface AIIntelligenceState {
           <h1>GovernIQ</h1>
           <p>AI-powered decision support for people, sustainability, initiatives, and leadership action.</p>
         </div>
-        <div class="header-actions">
-          <button class="btn btn-primary" routerLink="/brief">
-            <span class="material-icons">auto_awesome</span>
-            Generate Brief
-          </button>
-        </div>
       </header>
 
       <!-- Status Cards -->
       <div class="grid grid-4 stats-grid">
         <div class="stat-card">
-          <div class="stat-icon esg">
-            <span class="material-icons">eco</span>
+          <div class="stat-row">
+            <div class="stat-icon esg">
+              <span class="material-icons">eco</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Sustainability</span>
+              <span class="stat-value">Active</span>
+            </div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">ESG Metrics</span>
-            <span class="stat-value">{{ stats.esgMetrics }}</span>
-          </div>
+          <button class="ask-ai-btn" (click)="askAI('What are the latest sustainability metrics and trends?')">
+            <span class="material-icons">smart_toy</span> Ask AI
+          </button>
         </div>
         
         <div class="stat-card">
-          <div class="stat-icon dei">
-            <span class="material-icons">diversity_3</span>
+          <div class="stat-row">
+            <div class="stat-icon dei">
+              <span class="material-icons">diversity_3</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">People</span>
+              <span class="stat-value">Active</span>
+            </div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">DEI Metrics</span>
-            <span class="stat-value">{{ stats.deiMetrics }}</span>
-          </div>
+          <button class="ask-ai-btn" (click)="askAI('What are the latest people and DEI metrics and trends?')">
+            <span class="material-icons">smart_toy</span> Ask AI
+          </button>
         </div>
         
         <div class="stat-card">
-          <div class="stat-icon initiatives">
-            <span class="material-icons">assignment</span>
+          <div class="stat-row">
+            <div class="stat-icon initiatives">
+              <span class="material-icons">assignment</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Active Initiatives</span>
+              <span class="stat-value">{{ stats.initiatives }}</span>
+            </div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Active Initiatives</span>
-            <span class="stat-value">{{ stats.initiatives }}</span>
-          </div>
+          <button class="ask-ai-btn" (click)="askAI('Give me a summary of all active initiatives, their status and progress')">
+            <span class="material-icons">smart_toy</span> Ask AI
+          </button>
         </div>
         
         <div class="stat-card" [class.warning]="stats.overdueCount > 0">
-          <div class="stat-icon overdue">
-            <span class="material-icons">warning</span>
+          <div class="stat-row">
+            <div class="stat-icon overdue">
+              <span class="material-icons">warning</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Overdue Items</span>
+              <span class="stat-value">{{ stats.overdueCount }}</span>
+            </div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Overdue Items</span>
-            <span class="stat-value">{{ stats.overdueCount }}</span>
-          </div>
+          <button class="ask-ai-btn" (click)="askAI('Which initiatives are overdue and what actions should leadership take?')">
+            <span class="material-icons">smart_toy</span> Ask AI
+          </button>
         </div>
       </div>
 
@@ -107,6 +121,9 @@ interface AIIntelligenceState {
               <span class="progress-label">{{ init.progress }}% Complete</span>
             </div>
             <span class="initiative-status" [ngClass]="init.status.toLowerCase().replace(' ', '-')">{{ init.status }}</span>
+            <button class="ask-ai-btn" (click)="askAI('Analyze initiative ' + init.id + ' (' + init.name + ') - what is the current status, risks and recommended actions?')" title="Ask AI about this initiative">
+              <span class="material-icons">smart_toy</span> Ask AI
+            </button>
           </article>
         </div>
       </section>
@@ -155,7 +172,10 @@ interface AIIntelligenceState {
               </div>
             </div>
             <div class="intelligence-footer">
-              <span class="data-source">Based on: ESG metrics, DEI data, Initiatives</span>
+              <span class="data-source">Based on: Sustainability metrics, People data, Initiatives</span>
+              <button class="ask-ai-btn" (click)="askAI('What are the top risks in our sustainability and people data that leadership should address?')" title="Ask AI about Risks">
+                <span class="material-icons">smart_toy</span> Ask AI
+              </button>
             </div>
           </article>
 
@@ -186,6 +206,9 @@ interface AIIntelligenceState {
             </div>
             <div class="intelligence-footer">
               <span class="data-source">Based on: Trends, Correlations, Patterns</span>
+              <button class="ask-ai-btn" (click)="askAI('What insights and patterns can you find across our sustainability metrics, people data and initiatives?')" title="Ask AI about Insights">
+                <span class="material-icons">smart_toy</span> Ask AI
+              </button>
             </div>
           </article>
 
@@ -216,6 +239,9 @@ interface AIIntelligenceState {
             </div>
             <div class="intelligence-footer">
               <span class="data-source">Based on: Priorities, Impact, Resources</span>
+              <button class="ask-ai-btn" (click)="askAI('What are the top priority recommendations for leadership based on current data and initiatives?')" title="Ask AI about Recommendations">
+                <span class="material-icons">smart_toy</span> Ask AI
+              </button>
             </div>
           </article>
         </div>
@@ -227,7 +253,7 @@ interface AIIntelligenceState {
         <div class="ai-chart-header">
           <div class="ai-chart-title">
             <div>
-              <h3>ESG Trends Analysis</h3>
+              <h3>Sustainability Trends Analysis</h3>
             </div>
           </div>
           <div class="kpi-row" *ngIf="analytics">
@@ -285,8 +311,8 @@ interface AIIntelligenceState {
 
         <div class="no-data-ai" *ngIf="!hasChartData">
           <span class="material-icons">auto_graph</span>
-          <p>No ESG data in this range</p>
-          <small>Adjust the date filters or upload ESG data first</small>
+          <p>No sustainability data in this range</p>
+          <small>Adjust the date filters or upload sustainability data first</small>
         </div>
       </div>
 
@@ -340,20 +366,19 @@ interface AIIntelligenceState {
         </div>
       </div>
 
-      <!-- Last Brief -->
+      <!-- Meeting Summary -->
       <div class="card">
         <div class="card-header">
-          <h3>Latest Executive Brief</h3>
-          <a routerLink="/brief" class="btn btn-secondary">View All Briefs</a>
+          <h3>Meeting Summary</h3>
+          <a routerLink="/brief" class="btn btn-secondary">Summarize Now</a>
         </div>
-        <div class="last-brief-info" *ngIf="latestBrief">
-          <span class="material-icons">schedule</span>
-          <span>Last generated: {{ latestBrief | date:'medium' }}</span>
+        <div class="last-brief-info">
+          <span class="material-icons">summarize</span>
+          <span>Upload meeting notes and use AI to extract critical points, decisions, blockers, and action items.</span>
         </div>
-        <div class="last-brief-info" *ngIf="!latestBrief">
-          <span class="material-icons">info</span>
-          <span>No briefs generated yet. Upload data and generate your first brief!</span>
-        </div>
+        <button class="ask-ai-btn" style="margin-top:12px" (click)="askAI('Summarize the latest meeting notes and highlight key decisions, blockers and action items')" title="Ask AI about Meetings">
+          <span class="material-icons">smart_toy</span> Ask AI
+        </button>
       </div>
     </div>
   `
@@ -375,7 +400,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // AI Intelligence State
     intelligence: AIIntelligenceState = {
       risks: 'Click "Generate Intelligence" to analyze risks from your uploaded sustainability, people, and initiatives data.',
-      insights: 'AI will identify patterns and connections across your ESG metrics, DEI data, and active initiatives.',
+      insights: 'AI will identify patterns and connections across your sustainability metrics, people data, and active initiatives.',
       recommendations: 'Leadership action recommendations will be generated based on current priorities and data trends.',
       risksLoading: false,
       insightsLoading: false,
@@ -385,7 +410,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Sample Initiatives for Demo
     sampleInitiatives: SampleInitiative[] = [
       {
-        id: 'INIT-001',
+        id: 'INIT-SUS-1',
         name: 'Renewable Energy Transition',
         owner: 'Maria Garcia',
         pillar: 'Sustainability',
@@ -395,13 +420,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         progress: 45
       },
       {
-        id: 'INIT-002',
-        name: 'Leadership Mentorship Program',
+        id: 'INIT-PEO-1',
+        name: 'AI Ready Workforce Program',
         owner: 'James Wilson',
         pillar: 'People',
         status: 'In Progress',
         due_date: '2026-09-15',
-        description: 'Establish cross-functional mentorship pairing senior leaders with high-potential talent for career growth.',
+        description: 'Upskill workforce with AI literacy, tools training, and hands-on labs to prepare teams for AI-augmented workflows.',
         progress: 30
       }
     ];
@@ -413,7 +438,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         overdueCount: 0
     };
 
-    constructor(private api: ApiService) { }
+    constructor(private api: ApiService, private router: Router) { }
 
     ngOnInit() {
         // Default date range: last 90 days
@@ -487,8 +512,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             next: (health) => {
                 this.health = health;
                 this.features = [
-                    { name: 'Deterministic Briefs', enabled: health.features.deterministic_briefs },
-                    { name: 'AI-Powered Briefs', enabled: health.features.ai_briefs },
+                    { name: 'Meeting Summarization', enabled: health.features.deterministic_briefs },
+                    { name: 'AI Intelligence', enabled: health.features.ai_briefs },
                     { name: 'Conversational Chat', enabled: health.features.chat },
                     { name: 'RAG (Vector Search)', enabled: health.features.rag },
                     { name: 'Anomaly Detection', enabled: health.features.anomaly_detection }
@@ -555,8 +580,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     detectAnomalies() {
-        // Navigate to chat with anomaly detection query
-        window.location.href = '/chat?query=detect+anomalies';
+        this.router.navigate(['/chat'], { queryParams: { query: 'Detect anomalies in the metrics data' } });
+    }
+
+    askAI(question: string) {
+        this.router.navigate(['/chat'], { queryParams: { query: question } });
     }
 
     private buildChart(data: ESGAnalyticsResponse) {

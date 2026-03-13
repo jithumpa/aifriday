@@ -131,4 +131,23 @@ export class ApiService {
     getInitiatives(): Observable<{ initiatives: any[] }> {
         return this.http.get<{ initiatives: any[] }>(`${this.baseUrl}/initiatives`);
     }
+
+    // List available meeting notes (with optional date filter)
+    listNotes(date?: string): Observable<{ notes: { id: number; date: string; title: string; source: string }[]; available_dates: string[] }> {
+        const url = date
+            ? `${this.baseUrl}/notes/list?date=${encodeURIComponent(date)}`
+            : `${this.baseUrl}/notes/list`;
+        return this.http.get<{ notes: { id: number; date: string; title: string; source: string }[]; available_dates: string[] }>(url);
+    }
+
+    // Summarize a single meeting note by id or raw text
+    summarize(noteId?: number, text?: string): Observable<{ success: boolean; summary: string }> {
+        const body: any = {};
+        if (noteId) body.note_id = noteId;
+        if (text) body.text = text;
+        return this.http.post<{ success: boolean; summary: string }>(
+            `${this.baseUrl}/summarize`,
+            body
+        );
+    }
 }

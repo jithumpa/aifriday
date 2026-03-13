@@ -397,7 +397,7 @@ _INTELLIGENCE_SYSTEM = (
 
 _INTELLIGENCE_PROMPTS = {
     "risks": (
-        "Analyze the following governance data and identify the TOP 3-5 RISKS that leadership should be aware of.\n\n"
+        "Analyze the following governance data and identify exactly 4 RISKS that leadership should be aware of.\n\n"
         "DATA:\n{data}\n\n"
         "Focus on:\n"
         "- ESG metrics with negative trends or concerning values (e.g. rising emissions, declining renewable energy)\n"
@@ -406,7 +406,7 @@ _INTELLIGENCE_PROMPTS = {
         "- Data gaps or missing reporting periods\n\n"
         "For each risk provide: a clear risk statement, severity (High/Medium/Low), "
         "supporting data evidence with specific values and IDs, and what could happen if unaddressed.\n"
-        "Format as numbered items. Be direct and actionable."
+        "Return EXACTLY 4 bullet points using • as the bullet character. Be direct and actionable."
     ),
     "insights": (
         "Analyze the following governance data and generate 3-5 KEY INSIGHTS that reveal patterns, connections, and trends.\n\n"
@@ -500,6 +500,183 @@ async def intelligence_recommendations(request: IntelligenceRequest = Intelligen
     return {"success": True, "recommendations": response_text, "raw_response": response_text}
 
 
+# ============ MEETING NOTES LISTING ============
+
+def _extract_meeting_title(content: str) -> str:
+    """Extract meeting title from the first non-empty line of note content."""
+    for line in (content or "").split("\n"):
+        stripped = line.strip()
+        if stripped:
+            return stripped[:120]
+    return "Untitled Meeting"
+
+
+def _extract_meeting_description(content: str) -> str:
+    """Extract a short description from meeting note content — key topics, attendees, etc."""
+    lines = (content or "").split("\n")
+    parts = []
+    attendees = ""
+    topics = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        lower = stripped.lower()
+        if "attendees" in lower or "participants" in lower:
+            attendees = stripped
+        elif any(tag in lower for tag in ["decision", "action", "blocker", "risk"]):
+            topics.append(stripped.lstrip("- ").split(":")[0].strip())
+        elif stripped.startswith("- ") and ":" in stripped:
+            speaker = stripped.lstrip("- ").split(":")[0].strip()
+            if speaker and speaker not in topics:
+                topics.append(speaker)
+    if attendees:
+        parts.append(attendees[:100])
+    if topics:
+        parts.append("Topics: " + ", ".join(dict.fromkeys(topics))[:120])
+    return " | ".join(parts) if parts else "Meeting notes"
+
+
+@app.get('/notes/list', tags=["Meeting Notes"])
+async def list_notes(date: str = Query(None, description="Filter by date YYYY-MM-DD")):
+    """
+    List available meeting notes, optionally filtered by date.
+    Returns id, date, title (first line), and source for each note.
+    """
+    db = SessionLocal()
+    try:
+        query = db.query(Note).order_by(Note.created_at.desc())
+        notes = query.all()
+
+        results = []
+        seen_dates = set()
+        for n in notes:
+            note_date = n.created_at.strftime("%Y-%m-%d") if n.created_at else None
+            if date and note_date != date:
+                continue
+            seen_dates.add(note_date)
+            results.append({
+                "id": n.id,
+                "date": note_date,
+                "title": _extract_meeting_title(n.content),
+                "description": _extract_meeting_description(n.content),
+                "source": n.source,
+            })
+
+        # Also return distinct available dates for date-picker
+        all_dates = sorted(
+            {n.created_at.strftime("%Y-%m-%d") for n in db.query(Note).all() if n.created_at},
+            reverse=True,
+        )
+
+        return {"notes": results, "available_dates": all_dates}
+    finally:
+        db.close()
+
+
+# ============ MEETING SUMMARIZE ENDPOINT ============
+
+class SummarizeRequest(BaseModel):
+    note_id: Optional[int] = None
+    text: Optional[str] = None
+
+
+@app.post('/summarize', tags=["Intelligence"])
+async def summarize_meetings(request: SummarizeRequest = SummarizeRequest()):
+    """
+    Summarize a single meeting note into exactly 5 executive bullet points.
+    Accepts note_id (DB id) or raw text.
+    """
+    # Gather the meeting note
+    if request.note_id:
+        db = SessionLocal()
+        try:
+            note = db.query(Note).filter(Note.id == request.note_id).first()
+            if not note:
+                raise HTTPException(status_code=404, detail="Meeting note not found")
+            notes_text = note.content
+        finally:
+            db.close()
+    elif request.text and request.text.strip():
+        notes_text = request.text.strip()
+    else:
+        db = SessionLocal()
+        try:
+            notes = db.query(Note).order_by(Note.id.desc()).limit(20).all()
+            if not notes:
+                return {
+                    "success": True,
+                    "summary": "No meeting notes found. Please upload meeting notes first via the Data Ingestion page.",
+                }
+            notes_text = "\n\n".join(
+                f"[Source: {n.source}]\n{n.content}" for n in notes
+            )
+        finally:
+            db.close()
+
+    # Also include initiatives context for cross-referencing
+    db = SessionLocal()
+    try:
+        initiatives = db.query(Initiative).all()
+        init_context = ""
+        if initiatives:
+            init_lines = []
+            today = datetime.date.today()
+            for i in initiatives:
+                overdue = (
+                    i.due_date
+                    and i.due_date < today
+                    and (i.status or "").lower() not in ["done", "completed", "closed"]
+                )
+                marker = " ** OVERDUE **" if overdue else ""
+                init_lines.append(
+                    f"  [{i.id}] {i.name} | Owner: {i.owner} | Pillar: {i.pillar} "
+                    f"| Status: {i.status} | Due: {i.due_date}{marker}"
+                )
+            init_context = "\n\nACTIVE INITIATIVES:\n" + "\n".join(init_lines)
+    finally:
+        db.close()
+
+    prompt = (
+        "You are GovernIQ, an AI governance assistant. Summarize the following meeting notes "
+        "into EXACTLY 5 concise, executive-ready bullet points.\n\n"
+        "Rules:\n"
+        "- Return EXACTLY 5 bullet points, no more, no less.\n"
+        "- Each bullet should be 1-2 sentences maximum.\n"
+        "- Focus on key decisions, action items, risks, blockers, and important updates.\n"
+        "- Reference specific people, initiative IDs, and dates where relevant.\n"
+        "- Start each bullet with a bold category tag like **Decision:**, **Action:**, **Risk:**, **Blocker:**, **Update:**\n\n"
+        f"MEETING NOTES:\n{notes_text}"
+        f"{init_context}"
+    )
+
+    try:
+        from agent import get_client
+        from config import OPENAI_MODEL
+        openai_client = get_client()
+        response = openai_client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "You are GovernIQ, an executive governance summarization assistant. Always produce exactly 5 bullet points."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+        )
+        summary = response.choices[0].message.content
+        return {"success": True, "summary": summary}
+    except Exception as e:
+        # Deterministic fallback — extract 5 key lines
+        lines = notes_text.split("\n")
+        key_lines = [
+            l.strip() for l in lines
+            if any(kw in l.lower() for kw in ["action", "decision", "blocker", "risk", "update"])
+        ]
+        if len(key_lines) < 5:
+            key_lines += [l.strip() for l in lines if l.strip() and l.strip() not in key_lines][:5 - len(key_lines)]
+        fallback = "\n".join(f"• {a}" for a in key_lines[:5])
+        return {"success": True, "summary": fallback, "error": str(e)}
+
+
 @app.post('/demo/seed-initiatives', tags=["Data Ingestion"])
 async def seed_demo_initiatives():
     """
@@ -513,21 +690,21 @@ async def seed_demo_initiatives():
         records = [
             Initiative(
                 id="INIT-SUS-1",
-                name="Sustainability Packaging Reduction Sprint",
-                owner="Mark Tan",
+                name="Renewable Energy Transition",
+                owner="Maria Garcia",
                 pillar="Sustainability",
-                status="At Risk",
-                due_date=(datetime.date.today() + datetime.timedelta(days=10)),
+                status="In Progress",
+                due_date=datetime.date(2026, 6, 30),
                 last_update=now,
                 raw_row="demo_seed",
             ),
             Initiative(
                 id="INIT-PEO-1",
-                name="People Inclusive Leadership Program",
-                owner="Anna Lee",
+                name="AI Ready Workforce Program",
+                owner="James Wilson",
                 pillar="People",
                 status="In Progress",
-                due_date=(datetime.date.today() + datetime.timedelta(days=14)),
+                due_date=datetime.date(2026, 9, 15),
                 last_update=now,
                 raw_row="demo_seed",
             ),
@@ -541,6 +718,75 @@ async def seed_demo_initiatives():
             "status": "ok",
             "seeded": [r.id for r in records],
             "message": "Demo initiatives ready: 1 sustainability and 1 people"
+        }
+    finally:
+        db.close()
+
+
+@app.post('/demo/seed-notes', tags=["Data Ingestion"])
+async def seed_demo_notes():
+    """
+    Seed two demo meeting notes for the same date so the summarize page
+    shows 2 meetings to choose from.
+    """
+    db = SessionLocal()
+    try:
+        now = datetime.datetime(2026, 3, 10, 9, 0, 0)
+        note1 = Note(
+            source="Governance Steering Committee",
+            content=(
+                "Governance Steering Committee - 2026-03-10\n\n"
+                "Attendees: Maria Garcia, James Wilson, Sarah Chen (CFO), Raj Patel (CTO), Linda Park (CHRO)\n\n"
+                "- Maria Garcia: Renewable Energy Transition (INIT-SUS-1) at 45% completion. Solar panel installation in 3 EU facilities on track. "
+                "Wind power vendor contract for APAC facilities pending legal review.\n"
+                "- James Wilson: AI Ready Workforce Program (INIT-PEO-1) at 30% completion. Pilot AI literacy training completed for 120 employees. "
+                "Positive feedback but need to scale to remaining 800 staff.\n"
+                "- Sarah Chen: Q1 sustainability budget utilization at 62%. Recommends accelerating renewable energy spend before fiscal year-end. "
+                "Carbon credit costs rising 15% YoY.\n"
+                "- Raj Patel: AI tools evaluation complete — selected 3 platforms for workforce training. Integration with existing LMS blocked by SSO configuration.\n"
+                "- Linda Park: Gender balance declined to 47% globally. Urgent need to review hiring pipeline.\n"
+                "- DECISION: Approve additional $2M for solar installations in North America.\n"
+                "- DECISION: Extend AI literacy training deadline to September to ensure quality.\n"
+                "- BLOCKER: Wind power vendor contract stuck in legal for 3 weeks. Escalate to General Counsel.\n"
+                "- BLOCKER: LMS integration for AI training blocked by SSO — IT team to prioritize.\n"
+                "- ACTION: Maria to finalize North America solar vendor shortlist by March 20.\n"
+                "- ACTION: James to present scaled AI training plan to leadership by March 25.\n"
+                "- ACTION: Linda to propose gender balance improvement plan with hiring targets by April 1.\n"
+                "- RISK: If wind power contracts delayed beyond April, Q2 sustainability targets will be missed.\n"
+                "- RISK: Without LMS integration, AI training cannot scale beyond pilot group."
+            ),
+            created_at=now,
+        )
+        note2 = Note(
+            source="Weekly Operations Sync",
+            content=(
+                "Weekly Operations Sync - 2026-03-10\n\n"
+                "Attendees: Maria Garcia, James Wilson, Anil Kumar (Ops Lead), Priya Sharma (Data Team)\n\n"
+                "- Anil Kumar: Facility energy audits completed for 5 of 12 sites. Results show 22% energy waste in APAC offices. "
+                "Recommends immediate HVAC optimization.\n"
+                "- Maria Garcia: Solar vendor RFPs received from 4 companies. Cost range $1.2M-$1.8M per facility. "
+                "Need CFO approval to proceed with top 2 vendors.\n"
+                "- James Wilson: AI training pilot survey results — 89% satisfaction rate. Main gap: hands-on labs needed. "
+                "Requesting budget for cloud sandbox environments.\n"
+                "- Priya Sharma: ESG data pipeline automated — daily ingestion from 8 regional systems now live. "
+                "DEI dashboard refresh scheduled for next sprint.\n"
+                "- DECISION: Prioritize APAC HVAC optimization — ROI within 6 months.\n"
+                "- DECISION: Allocate $50K for AI training cloud sandbox environments.\n"
+                "- ACTION: Anil to deliver full energy audit report by March 18.\n"
+                "- ACTION: Maria to schedule vendor demos for March 22-23.\n"
+                "- ACTION: Priya to add carbon intensity metric to ESG dashboard by March 20.\n"
+                "- BLOCKER: Regional DEI data from Latin America still missing — HR team unresponsive.\n"
+                "- RISK: Energy audit delays could push HVAC optimization to Q3, missing sustainability targets."
+            ),
+            created_at=now,
+        )
+        db.add(note1)
+        db.add(note2)
+        db.commit()
+        return {
+            "status": "ok",
+            "seeded": 2,
+            "message": "2 demo meeting notes seeded for 2026-03-10"
         }
     finally:
         db.close()
