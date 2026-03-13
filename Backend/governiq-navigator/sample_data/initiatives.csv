@@ -1,0 +1,5 @@
+id,name,owner,pillar,status,due_date,last_update
+INIT-1,DEI training rollout,Anna Lee,HR,Done,2026-02-15,2026-02-15
+INIT-2,Water efficiency program,Mark Tan,Operations,In Progress,2026-03-10,2026-02-25
+INIT-SUS-1,Sustainable packaging conversion sprint,Mark Tan,Sustainability,At Risk,2026-03-20,2026-03-10
+INIT-PEO-1,People inclusion leadership academy,Anna Lee,People,In Progress,2026-03-22,2026-03-11

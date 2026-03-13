@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+venv/
+.env
+
+# SQLite DB (generated at runtime)
+*.db
+
+# ChromaDB local store
+Backend/governiq-navigator/chroma_db/
+
+# Node / Angular
+node_modules/
+Dashboard/governance-dashboard/.angular/
+Dashboard/governance-dashboard/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

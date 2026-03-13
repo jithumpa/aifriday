@@ -1,0 +1,226 @@
+Meeting notes - 2026-03-08
+
+- Jane: packaging supplier audit delayed due to vendor availability.
+- John: supply chain data ingestion blocked by missing API keys.
+- Enrique: AI project for predictive analytics started, initial data collection phase.
+- Ivan Christo: DEI initiative for gender equality launched in TCS offices.
+- Aswa: Water efficiency program monitoring initiated.
+- Action: Anna to confirm training completion records.
+
+Meeting notes - 2025-06-01
+- Jane: packaging supplier audit delayed due to vendor availability.
+- John: supply chain data ingestion blocked by missing API keys.
+- Enrique: AI project for demand forecasting started, initial data collection phase.
+- Ivan Christo: DEI training session scheduled for next week.
+- Aswa: Water efficiency program on track.
+- Action: Anna to confirm training completion records.
+
+Meeting notes - 2025-06-08
+- John: AI project for demand forecasting started, initial data collection phase.
+- Anna: DEI training session scheduled for next week.
+- Mark: Water efficiency program on track.
+- Enrique: Packaging supplier audit process improvement discussion.
+- Ivan Christo: Gender equality initiative receives additional funding.
+
+Meeting notes - 2025-06-15
+- Jane: Packaging supplier audit rescheduled, new vendor identified.
+- John: API keys received, supply chain data ingestion resumed.
+- Anna: Completed DEI training for HR team.
+- Enrique: AI model for demand forecasting shows promising results.
+- Ivan Christo: Gender equality initiative progress report shared with leadership.
+
+Meeting notes - 2025-06-22
+- John: AI model for demand forecasting shows promising results.
+- Anna: Gender equality initiative launched in TCS offices.
+- Mark: Water efficiency program faces minor delays.
+- Enrique: DEI initiative receives positive feedback from employees.
+- Ivan Christo: Packaging supplier audit completed, report pending.
+
+Meeting notes - 2025-06-29
+- Jane: Packaging supplier audit completed, report pending.
+- John: AI project enters model validation phase.
+- Anna: DEI initiative receives positive feedback from employees.
+- Enrique: AI project pilot results under review.
+- Ivan Christo: Water efficiency program back on schedule.
+
+Meeting notes - 2025-07-06
+- John: AI model deployed for pilot in supply chain.
+- Anna: Gender equality initiative progress report shared with leadership.
+- Jane: Packaging supplier audit report submitted.
+- Enrique: DEI training extended to Europe region.
+- Ivan Christo: Packaging supplier contract renegotiated for sustainability.
+
+Meeting notes - 2025-07-13
+- Anna: DEI training extended to Europe region.
+- John: AI project pilot results under review.
+- Mark: Water efficiency program back on schedule.
+- Enrique: Gender equality initiative receives additional funding.
+- Ivan Christo: AI project to expand to other business units.
+
+Meeting notes - 2025-07-20
+- Jane: Packaging supplier contract renegotiated for sustainability.
+- Anna: Gender equality initiative receives additional funding.
+- John: AI project to expand to other business units.
+- Enrique: DEI initiative recognized in TCS internal newsletter.
+- Ivan Christo: AI project team expanded with new data scientists.
+
+Meeting notes - 2025-07-27
+- Anna: DEI initiative recognized in TCS internal newsletter.
+- John: AI project team expanded with new data scientists.
+- Jane: Packaging supplier audit process improvement discussion.
+- Enrique: Gender equality initiative mid-term review completed.
+- Ivan Christo: AI project integration with ERP system started.
+
+Meeting notes - 2025-08-03
+- Anna: Gender equality initiative mid-term review completed.
+- John: AI project integration with ERP system started.
+- Mark: Water efficiency program achieves 5% reduction in usage.
+- Enrique: Packaging supplier audit process automated.
+- Ivan Christo: DEI initiative receives external recognition.
+
+Meeting notes - 2025-08-10
+- Jane: Packaging supplier audit process automated.
+- Anna: DEI initiative receives external recognition.
+- John: AI project integration phase completed successfully.
+- Enrique: Gender equality initiative survey launched for feedback.
+- Ivan Christo: AI project results presented to executive team.
+
+Meeting notes - 2025-08-17
+- Anna: Gender equality initiative survey launched for feedback.
+- John: AI project results presented to executive team.
+- Jane: Packaging supplier audit automation training conducted.
+- Enrique: DEI initiative action plan for next quarter drafted.
+- Ivan Christo: AI project to focus on anomaly detection next.
+
+Meeting notes - 2025-08-24
+- Anna: DEI initiative action plan for next quarter drafted.
+- John: AI project to focus on anomaly detection next.
+- Mark: Water efficiency program enters monitoring phase.
+- Enrique: Packaging supplier audit automation fully operational.
+- Ivan Christo: Gender equality initiative receives positive survey results.
+
+Meeting notes - 2025-08-31
+- Jane: Packaging supplier audit automation fully operational.
+- Anna: Gender equality initiative receives positive survey results.
+- John: AI project anomaly detection module in development.
+- Enrique: DEI initiative quarterly review scheduled.
+- Ivan Christo: AI project anomaly detection module tested.
+
+Meeting notes - 2025-09-07
+- Anna: DEI initiative quarterly review scheduled.
+- John: AI project anomaly detection module tested.
+- Jane: Packaging supplier audit automation performance review.
+- Enrique: Gender equality initiative new goals set for next quarter.
+- Ivan Christo: AI project anomaly detection deployed in production.
+
+Meeting notes - 2025-09-14
+- Anna: Gender equality initiative new goals set for next quarter.
+- John: AI project anomaly detection deployed in production.
+- Mark: Water efficiency program exceeds targets.
+- Enrique: Packaging supplier audit automation maintenance scheduled.
+- Ivan Christo: DEI initiative receives additional resources.
+
+Meeting notes - 2025-09-21
+- Jane: Packaging supplier audit automation maintenance scheduled.
+- Anna: DEI initiative receives additional resources.
+- John: AI project to explore predictive maintenance use case.
+- Enrique: Gender equality initiative annual report drafted.
+- Ivan Christo: AI project predictive maintenance pilot started.
+
+Meeting notes - 2025-09-28
+- Anna: Gender equality initiative annual report drafted.
+- John: AI project predictive maintenance pilot started.
+- Jane: Packaging supplier audit automation maintenance completed.
+- Enrique: DEI initiative annual review with leadership.
+- Ivan Christo: AI project predictive maintenance pilot results positive.
+
+Meeting notes - 2025-10-05
+- Anna: DEI initiative annual review with leadership.
+- John: AI project predictive maintenance pilot results positive.
+- Mark: Water efficiency program recognized by local authorities.
+- Enrique: Packaging supplier audit automation process optimized.
+- Ivan Christo: Gender equality initiative action plan for next year drafted.
+
+Meeting notes - 2025-10-12
+- Jane: Packaging supplier audit automation process optimized.
+- Anna: Gender equality initiative action plan for next year drafted.
+- John: AI project to scale predictive maintenance solution.
+- Enrique: DEI initiative receives award for impact in TCS.
+- Ivan Christo: AI project team to expand for scaling efforts.
+
+Meeting notes - 2025-10-19
+- Anna: DEI initiative receives award for impact in TCS.
+- John: AI project team to expand for scaling efforts.
+- Jane: Packaging supplier audit automation knowledge sharing session.
+- Enrique: Gender equality initiative new partnerships formed.
+- Ivan Christo: AI project scaling phase started.
+
+Meeting notes - 2025-10-26
+- Anna: Gender equality initiative new partnerships formed.
+- John: AI project scaling phase started.
+- Mark: Water efficiency program to be replicated in other regions.
+- Enrique: Packaging supplier audit automation adopted by new vendors.
+- Ivan Christo: DEI initiative mid-year review completed.
+
+Meeting notes - 2025-11-02
+- Jane: Packaging supplier audit automation adopted by new vendors.
+- Anna: DEI initiative mid-year review completed.
+- John: AI project scaling progress on track.
+- Enrique: Gender equality initiative receives feedback from new partners.
+- Ivan Christo: AI project scaling challenges discussed.
+
+Meeting notes - 2025-11-09
+- Anna: Gender equality initiative receives feedback from new partners.
+- John: AI project scaling challenges discussed.
+- Jane: Packaging supplier audit automation user training conducted.
+- Enrique: DEI initiative action plan for next quarter updated.
+- Ivan Christo: AI project scaling issues resolved.
+
+Meeting notes - 2025-11-16
+- Anna: DEI initiative action plan for next quarter updated.
+- John: AI project scaling issues resolved.
+- Mark: Water efficiency program new targets set.
+- Enrique: Packaging supplier audit automation performance metrics improved.
+- Ivan Christo: Gender equality initiative receives recognition from TCS leadership.
+
+Meeting notes - 2025-11-23
+- Jane: Packaging supplier audit automation performance metrics improved.
+- Anna: Gender equality initiative receives recognition from TCS leadership.
+- John: AI project scaling phase completed.
+- Enrique: DEI initiative annual report finalized.
+- Ivan Christo: AI project to start new use case exploration.
+
+Meeting notes - 2025-11-30
+- Anna: DEI initiative annual report finalized.
+- John: AI project to start new use case exploration.
+- Jane: Packaging supplier audit automation best practices documented.
+- Enrique: Gender equality initiative planning for next year started.
+- Ivan Christo: AI project new use case requirements gathering.
+
+Meeting notes - 2025-12-07
+- Anna: Gender equality initiative planning for next year started.
+- John: AI project new use case requirements gathering.
+- Mark: Water efficiency program year-end review completed.
+- Enrique: Packaging supplier audit automation roadmap for next year drafted.
+- Ivan Christo: DEI initiative new goals set for next year.
+
+Meeting notes - 2025-12-14
+- Jane: Packaging supplier audit automation roadmap for next year drafted.
+- Anna: DEI initiative new goals set for next year.
+- John: AI project new use case development started.
+- Enrique: Gender equality initiative year-end summary shared.
+- Ivan Christo: AI project new use case pilot planned.
+
+Meeting notes - 2025-12-21
+- Anna: Gender equality initiative year-end summary shared.
+- John: AI project new use case pilot planned.
+- Jane: Packaging supplier audit automation year-end review.
+- Enrique: DEI initiative year-end review with stakeholders.
+- Ivan Christo: AI project new use case pilot started.
+
+Meeting notes - 2025-12-28
+- Anna: DEI initiative year-end review with stakeholders.
+- John: AI project new use case pilot started.
+- Mark: Water efficiency program planning for next year.
+- Enrique: Packaging supplier audit automation best practices documented.
+- Ivan Christo: Gender equality initiative planning for next year started.
