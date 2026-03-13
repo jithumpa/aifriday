@@ -12,8 +12,8 @@ import { Initiative } from '../../models/api.models';
     <div class="initiatives-page">
       <header class="page-header">
         <div>
-          <h1>Initiatives Tracker</h1>
-          <p>Monitor sustainability and DEI initiatives</p>
+          <h1>Campaigns Tracker</h1>
+          <p>Monitor CSR and HR campaigns</p>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" (click)="loadInitiatives()">
@@ -93,14 +93,14 @@ import { Initiative } from '../../models/api.models';
       <!-- Loading -->
       <div class="loading-state" *ngIf="loading">
         <div class="spinner"></div>
-        <p>Loading initiatives...</p>
+        <p>Loading campaigns...</p>
       </div>
 
       <!-- Empty State -->
       <div class="empty-state" *ngIf="!loading && filteredInitiatives.length === 0">
         <span class="material-icons">inbox</span>
-        <h3>No initiatives found</h3>
-        <p>Upload initiatives data or adjust your filters</p>
+        <h3>No campaigns found</h3>
+        <p>Upload campaign data or adjust your filters</p>
       </div>
 
       <!-- Analysis Modal -->
@@ -382,26 +382,25 @@ export class InitiativesComponent implements OnInit {
 
     loadInitiatives() {
         this.loading = true;
-        // Note: We'll use the chat endpoint to query initiatives
-        this.api.chat('List all initiatives with their status, owner, pillar, and due dates. Format as a structured list.').subscribe({
+        this.api.getInitiativesList().subscribe({
             next: (res) => {
-                // Parse response - for now we'll show the raw data
+                this.initiatives = (res.initiatives || []).map((i: any) => ({
+                    id: i.id,
+                    name: i.name,
+                    owner: i.owner,
+                    pillar: i.pillar,
+                    status: i.status,
+                    due_date: i.due_date,
+                    last_update: i.last_update,
+                    is_overdue: i.is_overdue ?? false,
+                }));
                 this.loading = false;
-                // This is a simplified version - in production you'd have a dedicated endpoint
             },
             error: () => {
+                this.initiatives = [];
                 this.loading = false;
             }
         });
-
-        // For demo, set some sample data
-        this.initiatives = [
-            { id: 'INIT-1', name: 'Reduce plastic packaging', owner: 'Jane Doe', pillar: 'Packaging', status: 'In Progress', due_date: '2026-02-28', last_update: '2026-02-20', is_overdue: true },
-            { id: 'INIT-2', name: 'Supply chain GHG', owner: 'John Smith', pillar: 'Supply Chain', status: 'At Risk', due_date: '2026-03-05', last_update: '2026-03-01', is_overdue: true },
-            { id: 'INIT-3', name: 'DEI training rollout', owner: 'Anna Lee', pillar: 'HR', status: 'Done', due_date: '2026-02-15', last_update: '2026-02-15', is_overdue: false },
-            { id: 'INIT-4', name: 'Water efficiency program', owner: 'Mark Tan', pillar: 'Operations', status: 'In Progress', due_date: '2026-03-10', last_update: '2026-02-25', is_overdue: false },
-        ];
-        this.loading = false;
     }
 
     get filteredInitiatives(): Initiative[] {

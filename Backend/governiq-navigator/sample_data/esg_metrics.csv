@@ -1,137 +1,19 @@
 date,org_unit,metric_name,value,unit
-2024-01-01,Europe,CO2 Emissions,1400,tonnes
-2024-01-02,Europe,CO2 Emissions,1390,tonnes
-2024-01-03,Europe,CO2 Emissions,1385,tonnes
-2024-01-04,Europe,CO2 Emissions,1370,tonnes
-2024-01-05,Europe,CO2 Emissions,1365,tonnes
-2024-01-06,Europe,CO2 Emissions,1350,tonnes
-2024-01-07,Europe,CO2 Emissions,1345,tonnes
-2024-02-01,Europe,CO2 Emissions,1330,tonnes
-2024-02-02,Europe,CO2 Emissions,1320,tonnes
-2024-02-03,Europe,CO2 Emissions,1315,tonnes
-2024-02-04,Europe,CO2 Emissions,1300,tonnes
-2024-02-05,Europe,CO2 Emissions,1295,tonnes
-2024-02-06,Europe,CO2 Emissions,1280,tonnes
-2024-02-07,Europe,CO2 Emissions,1275,tonnes
-2024-03-01,Europe,CO2 Emissions,1260,tonnes
-2024-03-02,Europe,CO2 Emissions,1250,tonnes
-2024-03-03,Europe,CO2 Emissions,1245,tonnes
-2024-03-04,Europe,CO2 Emissions,1230,tonnes
-2024-03-05,Europe,CO2 Emissions,1225,tonnes
-2024-03-06,Europe,CO2 Emissions,1210,tonnes
-2024-03-07,Europe,CO2 Emissions,1205,tonnes
-2025-01-01,Europe,CO2 Emissions,1190,tonnes
-2025-01-02,Europe,CO2 Emissions,1180,tonnes
-2025-01-03,Europe,CO2 Emissions,1175,tonnes
-2025-01-04,Europe,CO2 Emissions,1160,tonnes
-2025-01-05,Europe,CO2 Emissions,1155,tonnes
-2025-01-06,Europe,CO2 Emissions,1140,tonnes
-2025-01-07,Europe,CO2 Emissions,1135,tonnes
-2025-02-01,Europe,CO2 Emissions,1130,tonnes
-2025-02-02,Europe,CO2 Emissions,1120,tonnes
-2025-02-03,Europe,CO2 Emissions,1115,tonnes
-2025-02-04,Europe,CO2 Emissions,1100,tonnes
-2025-02-05,Europe,CO2 Emissions,1095,tonnes
-2025-02-06,Europe,CO2 Emissions,1080,tonnes
-2025-02-07,Europe,CO2 Emissions,1075,tonnes
-2025-03-01,Europe,CO2 Emissions,1060,tonnes
-2025-03-02,Europe,CO2 Emissions,1050,tonnes
-2025-03-03,Europe,CO2 Emissions,1045,tonnes
-2025-03-04,Europe,CO2 Emissions,1030,tonnes
-2025-03-05,Europe,CO2 Emissions,1025,tonnes
-2025-03-06,Europe,CO2 Emissions,1010,tonnes
-2025-03-07,Europe,CO2 Emissions,1005,tonnes
-2026-01-01,Europe,CO2 Emissions,1000,tonnes
-2026-01-02,Europe,CO2 Emissions,990,tonnes
-2026-01-03,Europe,CO2 Emissions,985,tonnes
-2026-01-04,Europe,CO2 Emissions,970,tonnes
-2026-01-05,Europe,CO2 Emissions,965,tonnes
-2026-01-06,Europe,CO2 Emissions,950,tonnes
-2026-01-07,Europe,CO2 Emissions,945,tonnes
-2026-02-01,Europe,CO2 Emissions,930,tonnes
-2026-02-02,Europe,CO2 Emissions,920,tonnes
-2026-02-03,Europe,CO2 Emissions,915,tonnes
-2026-02-04,Europe,CO2 Emissions,900,tonnes
-2026-02-05,Europe,CO2 Emissions,895,tonnes
-2026-02-06,Europe,CO2 Emissions,880,tonnes
-2026-02-07,Europe,CO2 Emissions,875,tonnes
-2026-03-01,Europe,CO2 Emissions,860,tonnes
-2026-03-02,Europe,CO2 Emissions,850,tonnes
-2026-03-03,Europe,CO2 Emissions,845,tonnes
-2026-03-04,Europe,CO2 Emissions,830,tonnes
-2026-03-05,Europe,CO2 Emissions,825,tonnes
-2026-03-06,Europe,CO2 Emissions,810,tonnes
-2026-03-07,Europe,CO2 Emissions,805,tonnes
-2024-01-01,Europe,CO2 Emissions,1400,tonnes
-2024-01-02,Europe,CO2 Emissions,1390,tonnes
-2024-01-03,Europe,CO2 Emissions,1385,tonnes
-2024-01-04,Europe,CO2 Emissions,1370,tonnes
-2024-01-05,Europe,CO2 Emissions,1365,tonnes
-2024-01-06,Europe,CO2 Emissions,1350,tonnes
-2024-01-07,Europe,CO2 Emissions,1345,tonnes
-2024-02-01,Europe,CO2 Emissions,1330,tonnes
-2024-02-02,Europe,CO2 Emissions,1320,tonnes
-2024-02-03,Europe,CO2 Emissions,1315,tonnes
-2024-02-04,Europe,CO2 Emissions,1300,tonnes
-2024-02-05,Europe,CO2 Emissions,1295,tonnes
-2024-02-06,Europe,CO2 Emissions,1280,tonnes
-2024-02-07,Europe,CO2 Emissions,1275,tonnes
-2024-03-01,Europe,CO2 Emissions,1260,tonnes
-2024-03-02,Europe,CO2 Emissions,1250,tonnes
-2024-03-03,Europe,CO2 Emissions,1245,tonnes
-2024-03-04,Europe,CO2 Emissions,1230,tonnes
-2024-03-05,Europe,CO2 Emissions,1225,tonnes
-2024-03-06,Europe,CO2 Emissions,1210,tonnes
-2024-03-07,Europe,CO2 Emissions,1205,tonnes
-2025-01-01,Europe,CO2 Emissions,1190,tonnes
-2025-01-02,Europe,CO2 Emissions,1180,tonnes
-2025-01-03,Europe,CO2 Emissions,1175,tonnes
-2025-01-04,Europe,CO2 Emissions,1160,tonnes
-2025-01-05,Europe,CO2 Emissions,1155,tonnes
-2025-01-06,Europe,CO2 Emissions,1140,tonnes
-2025-01-07,Europe,CO2 Emissions,1135,tonnes
-2025-02-01,Europe,CO2 Emissions,1130,tonnes
-2025-02-02,Europe,CO2 Emissions,1120,tonnes
-2025-02-03,Europe,CO2 Emissions,1115,tonnes
-2025-02-04,Europe,CO2 Emissions,1100,tonnes
-2025-02-05,Europe,CO2 Emissions,1095,tonnes
-2025-02-06,Europe,CO2 Emissions,1080,tonnes
-2025-02-07,Europe,CO2 Emissions,1075,tonnes
-2025-03-01,Europe,CO2 Emissions,1060,tonnes
-2025-03-02,Europe,CO2 Emissions,1050,tonnes
-2025-03-03,Europe,CO2 Emissions,1045,tonnes
-2025-03-04,Europe,CO2 Emissions,1030,tonnes
-2025-03-05,Europe,CO2 Emissions,1025,tonnes
-2025-03-06,Europe,CO2 Emissions,1010,tonnes
-2025-03-07,Europe,CO2 Emissions,1005,tonnes
-2026-01-01,Europe,CO2 Emissions,1000,tonnes
-2026-01-02,Europe,CO2 Emissions,990,tonnes
-2026-01-03,Europe,CO2 Emissions,985,tonnes
-2026-01-04,Europe,CO2 Emissions,970,tonnes
-2026-01-05,Europe,CO2 Emissions,965,tonnes
-2026-01-06,Europe,CO2 Emissions,950,tonnes
-2026-01-07,Europe,CO2 Emissions,945,tonnes
-2026-02-01,Europe,CO2 Emissions,930,tonnes
-2026-02-02,Europe,CO2 Emissions,920,tonnes
-2026-02-03,Europe,CO2 Emissions,915,tonnes
-2026-02-04,Europe,CO2 Emissions,900,tonnes
-2026-02-05,Europe,CO2 Emissions,895,tonnes
-2026-02-06,Europe,CO2 Emissions,880,tonnes
-2026-02-07,Europe,CO2 Emissions,875,tonnes
-2026-03-01,Europe,CO2 Emissions,860,tonnes
-2026-03-02,Europe,CO2 Emissions,850,tonnes
-2026-03-03,Europe,CO2 Emissions,845,tonnes
-2026-03-04,Europe,CO2 Emissions,830,tonnes
-2026-03-05,Europe,CO2 Emissions,825,tonnes
-2026-03-06,Europe,CO2 Emissions,810,tonnes
-2026-03-07,Europe,CO2 Emissions,805,tonnes
-2024-01-01,Europe,Water Use,25000,m³
-2024-01-01,Europe,Energy Consumption,500000,kWh
-2024-06-01,Europe,Water Use,27000,m³
-2024-06-01,Europe,Energy Consumption,520000,kWh
-2025-01-01,Europe,Water Use,26000,m³
-2025-01-01,Europe,Energy Consumption,510000,kWh
-2025-07-01,Europe,Water Use,28000,m³
-2025-07-01,Europe,Energy Consumption,530000,kWh
-2026-03-01,Europe,Water Use,29500,m³
-2026-03-01,Europe,Energy Consumption,545000,kWh
+2025-10-01,TCS Mexico,Electricity Usage,185000,kWh
+2025-11-01,TCS Mexico,Electricity Usage,180000,kWh
+2025-12-01,TCS Mexico,Electricity Usage,176000,kWh
+2026-01-01,TCS Mexico,Electricity Usage,172000,kWh
+2026-02-01,TCS Mexico,Electricity Usage,178000,kWh
+2026-03-01,TCS Mexico,Electricity Usage,182000,kWh
+2025-10-01,TCS Mexico,CO2 Emissions,92,tonnes
+2025-11-01,TCS Mexico,CO2 Emissions,89,tonnes
+2025-12-01,TCS Mexico,CO2 Emissions,87,tonnes
+2026-01-01,TCS Mexico,CO2 Emissions,85,tonnes
+2026-02-01,TCS Mexico,CO2 Emissions,88,tonnes
+2026-03-01,TCS Mexico,CO2 Emissions,91,tonnes
+2025-10-01,TCS Mexico,Water Use,4200,m³
+2025-11-01,TCS Mexico,Water Use,4100,m³
+2025-12-01,TCS Mexico,Water Use,4000,m³
+2026-01-01,TCS Mexico,Water Use,3900,m³
+2026-02-01,TCS Mexico,Water Use,3850,m³
+2026-03-01,TCS Mexico,Water Use,3800,m³

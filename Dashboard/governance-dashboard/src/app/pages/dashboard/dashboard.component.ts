@@ -3,19 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { HealthResponse, LatestResponse, ESGAnalyticsResponse, SampleInitiative } from '../../models/api.models';
+import { HealthResponse, LatestResponse, ESGAnalyticsResponse } from '../../models/api.models';
 import { Chart, registerables } from 'chart.js';
 import { catchError, map, of } from 'rxjs';
 
 Chart.register(...registerables);
 
-interface AIIntelligenceState {
-  risks: string;
-  insights: string;
-  recommendations: string;
-  risksLoading: boolean;
-  insightsLoading: boolean;
-  recommendationsLoading: boolean;
+interface ParsedItem {
+  icon: string;
+  label: string;
+  text: string;
+  severity: 'high' | 'medium' | 'low' | 'info';
+}
+
+interface RecItem {
+  priority: 'High' | 'Medium' | 'Low';
+  action: string;
+  department: string;
+  icon: string;
 }
 
 @Component({
@@ -27,23 +32,23 @@ interface AIIntelligenceState {
       <header class="page-header">
         <div>
           <h1>GovernIQ</h1>
-          <p>AI-powered decision support for people, sustainability, initiatives, and leadership action.</p>
+          <p>AI-powered decision support for workforce, CSR, campaigns, and leadership action.</p>
         </div>
       </header>
 
       <!-- Status Cards -->
-      <div class="grid grid-4 stats-grid">
+      <div class="grid grid-3 stats-grid">
         <div class="stat-card">
           <div class="stat-row">
             <div class="stat-icon esg">
               <span class="material-icons">eco</span>
             </div>
             <div class="stat-content">
-              <span class="stat-label">Sustainability</span>
+              <span class="stat-label">CSR</span>
               <span class="stat-value">Active</span>
             </div>
           </div>
-          <button class="ask-ai-btn" (click)="askAI('What are the latest sustainability metrics and trends?')">
+          <button class="ask-ai-btn" (click)="askAI('Show me ONLY CSR/Sustainability metrics and trends. Use source=esg only, do NOT include any HR or workforce data.')">
             <span class="material-icons">smart_toy</span> Ask AI
           </button>
         </div>
@@ -54,26 +59,11 @@ interface AIIntelligenceState {
               <span class="material-icons">diversity_3</span>
             </div>
             <div class="stat-content">
-              <span class="stat-label">People</span>
+              <span class="stat-label">Workforce</span>
               <span class="stat-value">Active</span>
             </div>
           </div>
-          <button class="ask-ai-btn" (click)="askAI('What are the latest people and DEI metrics and trends?')">
-            <span class="material-icons">smart_toy</span> Ask AI
-          </button>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-row">
-            <div class="stat-icon initiatives">
-              <span class="material-icons">assignment</span>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Active Initiatives</span>
-              <span class="stat-value">{{ stats.initiatives }}</span>
-            </div>
-          </div>
-          <button class="ask-ai-btn" (click)="askAI('Give me a summary of all active initiatives, their status and progress')">
+          <button class="ask-ai-btn" (click)="askAI('Show me ONLY HR/Workforce metrics and trends. Use source=dei only, do NOT include any CSR or sustainability data.')">
             <span class="material-icons">smart_toy</span> Ask AI
           </button>
         </div>
@@ -88,162 +78,221 @@ interface AIIntelligenceState {
               <span class="stat-value">{{ stats.overdueCount }}</span>
             </div>
           </div>
-          <button class="ask-ai-btn" (click)="askAI('Which initiatives are overdue and what actions should leadership take?')">
+          <button class="ask-ai-btn" (click)="askAI('Which campaigns are overdue and what actions should leadership take?')">
             <span class="material-icons">smart_toy</span> Ask AI
           </button>
         </div>
       </div>
 
-      <!-- Demo Initiatives Section -->
-      <section class="demo-initiatives-section">
-        <div class="section-header">
-          <div>
-            <span class="section-eyebrow">Active Initiatives</span>
-            <h2>Key Initiatives Tracked</h2>
+      <!-- Insights Section -->
+      <section class="ai-section">
+        <div class="ai-section-header">
+          <div class="ai-section-title-row">
+            <span class="material-icons section-icon insight-icon">lightbulb</span>
+            <h2>Insights</h2>
+          </div>
+          <div class="ai-section-controls">
+            <select [(ngModel)]="insightsCategory" class="category-dropdown">
+              <option value="csr">CSR</option>
+              <option value="hr">HR / Workforce</option>
+            </select>
+            <button class="generate-btn" (click)="generateInsights()" [disabled]="insightsLoading">
+              <span class="material-icons" [class.spin]="insightsLoading">{{ insightsLoading ? 'sync' : 'auto_awesome' }}</span>
+              {{ insightsLoading ? 'Generating...' : 'Generate' }}
+            </button>
           </div>
         </div>
-        <div class="initiatives-row">
-          <article class="initiative-tile sustainability" *ngFor="let init of sampleInitiatives">
-            <div class="initiative-pillar-badge" [ngClass]="init.pillar.toLowerCase()">
-              <span class="material-icons">{{ init.pillar === 'Sustainability' ? 'eco' : 'people' }}</span>
-              {{ init.pillar }}
+        <div class="ai-section-body">
+          <div class="ai-placeholder" *ngIf="!insightsGenerated && !insightsLoading">
+            <span class="material-icons">lightbulb</span>
+            <p>Select a category and click <strong>Generate</strong> to get AI insights.</p>
+          </div>
+          <div class="ai-loading" *ngIf="insightsLoading">
+            <div class="ai-typing"><span></span><span></span><span></span></div>
+            <p>Analyzing {{ insightsCategory === 'csr' ? 'CSR' : 'HR' }} data for insights...</p>
+          </div>
+          <div class="split-view" *ngIf="insightsGenerated && !insightsLoading">
+            <div class="split-left">
+              <table class="panel-table">
+                <thead>
+                  <tr>
+                    <th class="col-num">#</th>
+                    <th>Insight</th>
+                    <th class="col-sev">Severity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of insightsItems; let i = index" class="panel-row">
+                    <td class="row-num">{{ i + 1 }}</td>
+                    <td class="row-text">
+                      <span class="row-label" *ngIf="item.label">{{ item.label }}: </span>{{ item.text }}
+                    </td>
+                    <td><span class="severity-badge" [ngClass]="item.severity">{{ item.severity }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <h3>{{ init.name }}</h3>
-            <p>{{ init.description }}</p>
-            <div class="initiative-meta">
-              <span><span class="material-icons">person</span> {{ init.owner }}</span>
-              <span><span class="material-icons">event</span> {{ init.due_date }}</span>
-            </div>
-            <div class="initiative-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" [style.width.%]="init.progress"></div>
+            <div class="split-right">
+              <div class="diagram-card">
+                <h4 class="diagram-title">Severity Distribution</h4>
+                <div class="css-donut" [style.background]="getDonutGradient(insightsItems)">
+                  <div class="donut-center">
+                    <span class="donut-num">{{ insightsItems.length }}</span>
+                    <span class="donut-sublabel">Insights</span>
+                  </div>
+                </div>
+                <div class="dist-legend">
+                  <div class="legend-row" *ngFor="let d of getSeverityDist(insightsItems)">
+                    <span class="legend-dot" [ngClass]="d.key"></span>
+                    <span class="legend-key">{{ d.label }}</span>
+                    <span class="legend-val">{{ d.count }}</span>
+                  </div>
+                </div>
               </div>
-              <span class="progress-label">{{ init.progress }}% Complete</span>
             </div>
-            <span class="initiative-status" [ngClass]="init.status.toLowerCase().replace(' ', '-')">{{ init.status }}</span>
-            <button class="ask-ai-btn" (click)="askAI('Analyze initiative ' + init.id + ' (' + init.name + ') - what is the current status, risks and recommended actions?')" title="Ask AI about this initiative">
-              <span class="material-icons">smart_toy</span> Ask AI
-            </button>
-          </article>
+          </div>
         </div>
       </section>
 
-      <!-- AI Intelligence Section -->
-      <section class="ai-intelligence-section">
-        <div class="ai-intelligence-header">
-          <div>
-            <span class="ai-intelligence-eyebrow">
-              <span class="material-icons pulse-icon">psychology</span>
-              AI Intelligence Engine
-            </span>
-            <h2>Real-Time AI Analysis</h2>
-            <p>GovernIQ analyzes uploaded sustainability, people, and initiative data to generate actionable intelligence.</p>
+      <!-- Risks Section -->
+      <section class="ai-section">
+        <div class="ai-section-header">
+          <div class="ai-section-title-row">
+            <span class="material-icons section-icon risk-icon">warning_amber</span>
+            <h2>Risks</h2>
           </div>
-          <button class="btn btn-primary ai-generate-btn" (click)="generateAllIntelligence()" [disabled]="isAnyLoading()">
-            <span class="material-icons" [class.spin]="isAnyLoading()">{{ isAnyLoading() ? 'sync' : 'auto_awesome' }}</span>
-            {{ isAnyLoading() ? 'Generating...' : 'Generate Intelligence' }}
-          </button>
+          <div class="ai-section-controls">
+            <select [(ngModel)]="risksCategory" class="category-dropdown">
+              <option value="csr">CSR</option>
+              <option value="hr">HR / Workforce</option>
+            </select>
+            <button class="generate-btn" (click)="generateRisks()" [disabled]="risksLoading">
+              <span class="material-icons" [class.spin]="risksLoading">{{ risksLoading ? 'sync' : 'auto_awesome' }}</span>
+              {{ risksLoading ? 'Generating...' : 'Generate' }}
+            </button>
+          </div>
         </div>
-
-        <div class="ai-intelligence-grid">
-          <!-- Risk Intelligence Card -->
-          <article class="intelligence-card risk-card">
-            <div class="intelligence-card-header">
-              <div class="intelligence-icon risk">
-                <span class="material-icons">warning_amber</span>
-              </div>
-              <div class="intelligence-title">
-                <span class="intelligence-label">Intelligence 1</span>
-                <h3>Risk Detection</h3>
-              </div>
-              <button class="refresh-btn" (click)="loadRisks()" [disabled]="intelligence.risksLoading">
-                <span class="material-icons" [class.spin]="intelligence.risksLoading">refresh</span>
-              </button>
+        <div class="ai-section-body">
+          <div class="ai-placeholder" *ngIf="!risksGenerated && !risksLoading">
+            <span class="material-icons">warning_amber</span>
+            <p>Select a category and click <strong>Generate</strong> to detect risks.</p>
+          </div>
+          <div class="ai-loading" *ngIf="risksLoading">
+            <div class="ai-typing"><span></span><span></span><span></span></div>
+            <p>Scanning {{ risksCategory === 'csr' ? 'CSR' : 'HR' }} data for risks...</p>
+          </div>
+          <div class="split-view" *ngIf="risksGenerated && !risksLoading">
+            <div class="split-left">
+              <table class="panel-table">
+                <thead>
+                  <tr>
+                    <th class="col-sev">Severity</th>
+                    <th>Risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of risksItems; let i = index" class="panel-row">
+                    <td><span class="severity-badge" [ngClass]="item.severity">{{ item.severity }}</span></td>
+                    <td class="row-text">
+                      <span class="row-label" *ngIf="item.label">{{ item.label }}: </span>{{ item.text }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div class="intelligence-body">
-              <div class="loading-state" *ngIf="intelligence.risksLoading">
-                <div class="ai-typing">
-                  <span></span><span></span><span></span>
+            <div class="split-right">
+              <div class="diagram-card risk-diagram">
+                <h4 class="diagram-title">Risk Assessment</h4>
+                <div class="risk-level-indicator" [ngClass]="getOverallRisk(risksItems)">
+                  <span class="material-icons">shield</span>
+                  <span class="risk-level-text">{{ getOverallRisk(risksItems) | uppercase }} RISK</span>
                 </div>
-                <p>Analyzing sustainability and people data for risks...</p>
-              </div>
-              <div class="intelligence-content" *ngIf="!intelligence.risksLoading">
-                <p style="white-space: pre-line">{{ intelligence.risks }}</p>
-              </div>
-            </div>
-            <div class="intelligence-footer">
-              <span class="data-source">Based on: Sustainability metrics, People data, Initiatives</span>
-              <button class="ask-ai-btn" (click)="askAI('What are the top risks in our sustainability and people data that leadership should address?')" title="Ask AI about Risks">
-                <span class="material-icons">smart_toy</span> Ask AI
-              </button>
-            </div>
-          </article>
-
-          <!-- Insights Intelligence Card -->
-          <article class="intelligence-card insight-card">
-            <div class="intelligence-card-header">
-              <div class="intelligence-icon insight">
-                <span class="material-icons">lightbulb</span>
-              </div>
-              <div class="intelligence-title">
-                <span class="intelligence-label">Intelligence 2</span>
-                <h3>Insights Generation</h3>
-              </div>
-              <button class="refresh-btn" (click)="loadInsights()" [disabled]="intelligence.insightsLoading">
-                <span class="material-icons" [class.spin]="intelligence.insightsLoading">refresh</span>
-              </button>
-            </div>
-            <div class="intelligence-body">
-              <div class="loading-state" *ngIf="intelligence.insightsLoading">
-                <div class="ai-typing">
-                  <span></span><span></span><span></span>
+                <div class="severity-bars">
+                  <div class="sbar" *ngFor="let d of getSeverityDist(risksItems)">
+                    <span class="sbar-label">{{ d.label }}</span>
+                    <div class="sbar-track">
+                      <div class="sbar-fill" [ngClass]="d.key" [style.width.%]="(d.count / risksItems.length) * 100"></div>
+                    </div>
+                    <span class="sbar-count">{{ d.count }}</span>
+                  </div>
                 </div>
-                <p>Connecting metrics with initiatives and campaigns...</p>
-              </div>
-              <div class="intelligence-content" *ngIf="!intelligence.insightsLoading">
-                <p style="white-space: pre-line">{{ intelligence.insights }}</p>
               </div>
             </div>
-            <div class="intelligence-footer">
-              <span class="data-source">Based on: Trends, Correlations, Patterns</span>
-              <button class="ask-ai-btn" (click)="askAI('What insights and patterns can you find across our sustainability metrics, people data and initiatives?')" title="Ask AI about Insights">
-                <span class="material-icons">smart_toy</span> Ask AI
-              </button>
-            </div>
-          </article>
+          </div>
+        </div>
+      </section>
 
-          <!-- Recommendations Intelligence Card -->
-          <article class="intelligence-card recommendation-card">
-            <div class="intelligence-card-header">
-              <div class="intelligence-icon recommendation">
-                <span class="material-icons">rocket_launch</span>
-              </div>
-              <div class="intelligence-title">
-                <span class="intelligence-label">Intelligence 3</span>
-                <h3>Recommendations</h3>
-              </div>
-              <button class="refresh-btn" (click)="loadRecommendations()" [disabled]="intelligence.recommendationsLoading">
-                <span class="material-icons" [class.spin]="intelligence.recommendationsLoading">refresh</span>
-              </button>
+      <!-- Recommendations Panel -->
+      <section class="ai-section rec-panel">
+        <div class="ai-section-header">
+          <div class="ai-section-title-row">
+            <span class="material-icons section-icon rec-icon">rocket_launch</span>
+            <h2>Recommendation Panel</h2>
+          </div>
+          <div class="ai-section-controls">
+            <select [(ngModel)]="recsCategory" class="category-dropdown">
+              <option value="csr">CSR</option>
+              <option value="hr">HR / Workforce</option>
+            </select>
+            <button class="generate-btn" (click)="generateRecommendations()" [disabled]="recsLoading">
+              <span class="material-icons" [class.spin]="recsLoading">{{ recsLoading ? 'sync' : 'auto_awesome' }}</span>
+              {{ recsLoading ? 'Generating...' : 'Generate' }}
+            </button>
+          </div>
+        </div>
+        <div class="ai-section-body">
+          <div class="ai-placeholder" *ngIf="!recsGenerated && !recsLoading">
+            <span class="material-icons">rocket_launch</span>
+            <p>Select a category and click <strong>Generate</strong> to get AI-powered recommendations.</p>
+          </div>
+          <div class="ai-loading" *ngIf="recsLoading">
+            <div class="ai-typing"><span></span><span></span><span></span></div>
+            <p>Generating {{ recsCategory === 'csr' ? 'CSR' : 'HR' }} recommendations...</p>
+          </div>
+          <div class="split-view" *ngIf="recsGenerated && !recsLoading">
+            <div class="split-left">
+              <table class="rec-table">
+                <thead>
+                  <tr>
+                    <th class="col-priority">Priority</th>
+                    <th class="col-action">Recommended Action</th>
+                    <th class="col-dept">Department</th>
+                    <th class="col-icon"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let rec of recItems" class="rec-row">
+                    <td>
+                      <span class="priority-badge" [ngClass]="rec.priority.toLowerCase()">{{ rec.priority }}</span>
+                    </td>
+                    <td class="rec-action-cell">{{ rec.action }}</td>
+                    <td class="rec-dept-cell">{{ rec.department }}</td>
+                    <td class="rec-icon-cell">
+                      <span class="material-icons rec-action-icon">{{ rec.icon }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div class="intelligence-body">
-              <div class="loading-state" *ngIf="intelligence.recommendationsLoading">
-                <div class="ai-typing">
-                  <span></span><span></span><span></span>
+            <div class="split-right">
+              <div class="diagram-card rec-diagram">
+                <h4 class="diagram-title">Priority Breakdown</h4>
+                <div class="css-donut" [style.background]="getRecDonutGradient(recItems)">
+                  <div class="donut-center">
+                    <span class="donut-num">{{ recItems.length }}</span>
+                    <span class="donut-sublabel">Actions</span>
+                  </div>
                 </div>
-                <p>Prioritizing leadership actions...</p>
-              </div>
-              <div class="intelligence-content" *ngIf="!intelligence.recommendationsLoading">
-                <p style="white-space: pre-line">{{ intelligence.recommendations }}</p>
+                <div class="dist-legend">
+                  <div class="legend-row" *ngFor="let d of getPriorityDist(recItems)">
+                    <span class="legend-dot" [ngClass]="d.key"></span>
+                    <span class="legend-key">{{ d.label }}</span>
+                    <span class="legend-val">{{ d.count }}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="intelligence-footer">
-              <span class="data-source">Based on: Priorities, Impact, Resources</span>
-              <button class="ask-ai-btn" (click)="askAI('What are the top priority recommendations for leadership based on current data and initiatives?')" title="Ask AI about Recommendations">
-                <span class="material-icons">smart_toy</span> Ask AI
-              </button>
-            </div>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -253,7 +302,7 @@ interface AIIntelligenceState {
         <div class="ai-chart-header">
           <div class="ai-chart-title">
             <div>
-              <h3>Sustainability Trends Analysis</h3>
+              <h3>CSR Trends Analysis</h3>
             </div>
           </div>
           <div class="kpi-row" *ngIf="analytics">
@@ -311,8 +360,8 @@ interface AIIntelligenceState {
 
         <div class="no-data-ai" *ngIf="!hasChartData">
           <span class="material-icons">auto_graph</span>
-          <p>No sustainability data in this range</p>
-          <small>Adjust the date filters or upload sustainability data first</small>
+          <p>No CSR data in this range</p>
+          <small>Adjust the date filters or upload CSR data first</small>
         </div>
       </div>
 
@@ -397,39 +446,21 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     trendSummary: { up: number; down: number; same: number } | null = null;
     private chart: Chart | null = null;
 
-    // AI Intelligence State
-    intelligence: AIIntelligenceState = {
-      risks: 'Click "Generate Intelligence" to analyze risks from your uploaded sustainability, people, and initiatives data.',
-      insights: 'AI will identify patterns and connections across your sustainability metrics, people data, and active initiatives.',
-      recommendations: 'Leadership action recommendations will be generated based on current priorities and data trends.',
-      risksLoading: false,
-      insightsLoading: false,
-      recommendationsLoading: false
-    };
+    // Per-section AI state
+    insightsCategory = 'csr';
+    insightsLoading = false;
+    insightsGenerated = false;
+    insightsItems: ParsedItem[] = [];
 
-    // Sample Initiatives for Demo
-    sampleInitiatives: SampleInitiative[] = [
-      {
-        id: 'INIT-SUS-1',
-        name: 'Renewable Energy Transition',
-        owner: 'Maria Garcia',
-        pillar: 'Sustainability',
-        status: 'In Progress',
-        due_date: '2026-06-30',
-        description: 'Transition 50% of facilities to renewable energy sources including solar and wind power installations.',
-        progress: 45
-      },
-      {
-        id: 'INIT-PEO-1',
-        name: 'AI Ready Workforce Program',
-        owner: 'James Wilson',
-        pillar: 'People',
-        status: 'In Progress',
-        due_date: '2026-09-15',
-        description: 'Upskill workforce with AI literacy, tools training, and hands-on labs to prepare teams for AI-augmented workflows.',
-        progress: 30
-      }
-    ];
+    risksCategory = 'csr';
+    risksLoading = false;
+    risksGenerated = false;
+    risksItems: ParsedItem[] = [];
+
+    recsCategory = 'csr';
+    recsLoading = false;
+    recsGenerated = false;
+    recItems: RecItem[] = [];
 
     stats = {
         esgMetrics: 0,
@@ -455,56 +486,235 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngAfterViewInit() {
         this.loadESGTrends();
-        // Auto-generate intelligence on load
-        this.generateAllIntelligence();
     }
 
     ngOnDestroy() {
         this.chart?.destroy();
     }
 
-    // AI Intelligence Methods
-    isAnyLoading(): boolean {
-      return this.intelligence.risksLoading || this.intelligence.insightsLoading || this.intelligence.recommendationsLoading;
-    }
-
-    generateAllIntelligence() {
-      this.loadRisks();
-      this.loadInsights();
-      this.loadRecommendations();
-    }
-
-    loadRisks() {
-      this.intelligence.risksLoading = true;
-      this.api.getRisks().pipe(
-        map(response => response.risks || 'No significant risks detected in current data.'),
-        catchError(() => of('Unable to analyze risks. Please ensure data has been uploaded.'))
-      ).subscribe(result => {
-        this.intelligence.risks = result;
-        this.intelligence.risksLoading = false;
+    // AI Section Methods
+    generateInsights() {
+      this.insightsLoading = true;
+      this.insightsGenerated = false;
+      const prompt = this.insightsCategory === 'csr'
+        ? 'Provide key insights from CSR/Sustainability metrics ONLY. Use source=esg only. Do NOT include any HR or workforce data. Focus on trends, patterns, and notable findings.'
+        : 'Provide key insights from HR/Workforce metrics ONLY. Use source=dei only. Do NOT include any CSR or sustainability data. Focus on trends, patterns, and notable findings.';
+      this.api.chat(prompt).subscribe({
+        next: (res) => {
+          this.insightsItems = this.parseItems(res.response, 'insight');
+          this.insightsGenerated = true;
+          this.insightsLoading = false;
+        },
+        error: (err) => {
+          console.error('Insights API error:', err);
+          this.insightsItems = this.parseItems('Unable to generate insights. Please ensure data has been uploaded.', 'insight');
+          this.insightsGenerated = true;
+          this.insightsLoading = false;
+        }
       });
     }
 
-    loadInsights() {
-      this.intelligence.insightsLoading = true;
-      this.api.getInsights().pipe(
-        map(response => response.insights || 'No significant insights available from current data.'),
-        catchError(() => of('Unable to generate insights. Please ensure data has been uploaded.'))
-      ).subscribe(result => {
-        this.intelligence.insights = result;
-        this.intelligence.insightsLoading = false;
+    generateRisks() {
+      this.risksLoading = true;
+      this.risksGenerated = false;
+      const prompt = this.risksCategory === 'csr'
+        ? 'Identify and analyze risks in CSR/Sustainability metrics ONLY. Use source=esg only. Do NOT include any HR or workforce data. Highlight critical, high, and medium severity risks.'
+        : 'Identify and analyze risks in HR/Workforce metrics ONLY. Use source=dei only. Do NOT include any CSR or sustainability data. Highlight critical, high, and medium severity risks.';
+      this.api.chat(prompt).subscribe({
+        next: (res) => {
+          this.risksItems = this.parseItems(res.response, 'risk');
+          this.risksGenerated = true;
+          this.risksLoading = false;
+        },
+        error: (err) => {
+          console.error('Risks API error:', err);
+          this.risksItems = this.parseItems('Unable to analyze risks. Please ensure data has been uploaded.', 'risk');
+          this.risksGenerated = true;
+          this.risksLoading = false;
+        }
       });
     }
 
-    loadRecommendations() {
-      this.intelligence.recommendationsLoading = true;
-      this.api.getRecommendations().pipe(
-        map(response => response.recommendations || 'No recommendations available. Please upload more data.'),
-        catchError(() => of('Unable to generate recommendations. Please ensure data has been uploaded.'))
-      ).subscribe(result => {
-        this.intelligence.recommendations = result;
-        this.intelligence.recommendationsLoading = false;
+    generateRecommendations() {
+      this.recsLoading = true;
+      const category = this.recsCategory === 'csr' ? 'CSR/Sustainability' : 'HR/Workforce';
+      const source = this.recsCategory === 'csr' ? 'esg' : 'dei';
+      const prompt = `Analyze ${category} data (source=${source} only) and provide exactly 5-8 actionable recommendations. ` +
+        `For EACH recommendation, output EXACTLY one line in this format:\n` +
+        `[PRIORITY] | Recommended action | Department responsible\n\n` +
+        `Where PRIORITY is High, Medium, or Low.\n` +
+        `Example:\n` +
+        `High | Reduce water consumption by 15% at manufacturing plants | Operations\n` +
+        `Medium | Launch renewable energy audit across all offices | Facilities\n\n` +
+        `Output ONLY the lines in this format, nothing else. No headers, no explanations.`;
+      this.api.chat(prompt).subscribe({
+        next: (res) => {
+          this.recItems = this.parseRecommendations(res.response);
+          this.recsGenerated = true;
+          this.recsLoading = false;
+        },
+        error: (err) => {
+          console.error('Recommendations API error:', err);
+          this.recItems = this.parseRecommendations('Medium | Unable to generate recommendations | System');
+          this.recsGenerated = true;
+          this.recsLoading = false;
+        }
       });
+    }
+
+    parseRecommendations(text: string): RecItem[] {
+      const iconMap: Record<string, string> = {
+        energy: 'bolt', renewable: 'bolt', electricity: 'bolt', solar: 'bolt', power: 'bolt',
+        water: 'water_drop', waste: 'delete', recycle: 'recycling',
+        carbon: 'cloud', co2: 'cloud', emission: 'cloud', air: 'air',
+        hire: 'person_add', hiring: 'person_add', recruit: 'person_add', diversity: 'diversity_3',
+        training: 'school', mentor: 'school', upskill: 'school', learn: 'school', education: 'school',
+        women: 'female', gender: 'wc', leadership: 'groups',
+        safety: 'health_and_safety', health: 'health_and_safety',
+        supply: 'local_shipping', transport: 'local_shipping',
+        report: 'assessment', audit: 'fact_check', compliance: 'gavel', policy: 'policy',
+      };
+
+      const lines = text.split('\n').filter(l => l.trim() && l.includes('|'));
+      const items: RecItem[] = [];
+
+      for (const line of lines) {
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length < 2) continue;
+
+        let priority: RecItem['priority'] = 'Medium';
+        const prio = parts[0].replace(/[\*\-\d.]+/g, '').trim().toLowerCase();
+        if (prio.includes('high')) priority = 'High';
+        else if (prio.includes('low')) priority = 'Low';
+        else priority = 'Medium';
+
+        const action = parts[1] || 'Review and take action';
+        const department = parts[2] || 'General';
+
+        // Pick icon based on keywords in the action
+        let icon = 'task_alt';
+        const actionLower = action.toLowerCase();
+        for (const [keyword, ic] of Object.entries(iconMap)) {
+          if (actionLower.includes(keyword)) { icon = ic; break; }
+        }
+
+        items.push({ priority, action, department, icon });
+      }
+
+      if (items.length === 0) {
+        // Fallback: treat each line as a recommendation
+        const fallbackLines = text.split('\n').filter(l => l.trim().length > 15);
+        for (const line of fallbackLines.slice(0, 6)) {
+          const cleaned = line.replace(/^[\s\-\*•\d.]+/, '').trim();
+          let icon = 'task_alt';
+          const lower = cleaned.toLowerCase();
+          for (const [keyword, ic] of Object.entries(iconMap)) {
+            if (lower.includes(keyword)) { icon = ic; break; }
+          }
+          items.push({
+            priority: lower.includes('urgent') || lower.includes('critical') || lower.includes('high') ? 'High' :
+                      lower.includes('low') || lower.includes('consider') ? 'Low' : 'Medium',
+            action: cleaned.replace(/^\*\*.*?\*\*[:\s]*/, ''),
+            department: 'General',
+            icon
+          });
+        }
+      }
+
+      return items;
+    }
+
+    parseItems(text: string, type: 'risk' | 'insight' | 'recommendation'): ParsedItem[] {
+      const lines = text.split('\n').filter(l => l.trim());
+      const items: ParsedItem[] = [];
+      const iconMap: Record<string, string> = {
+        risk: 'warning_amber',
+        insight: 'lightbulb',
+        recommendation: 'rocket_launch',
+      };
+      for (const line of lines) {
+        const cleaned = line.replace(/^[\s\-\*•\d.]+/, '').trim();
+        if (!cleaned || cleaned.length < 10) continue;
+        let severity: ParsedItem['severity'] = 'info';
+        const lower = cleaned.toLowerCase();
+        if (lower.includes('critical') || lower.includes('urgent') || lower.includes('high') || lower.includes('immediately')) {
+          severity = 'high';
+        } else if (lower.includes('moderate') || lower.includes('medium') || lower.includes('should')) {
+          severity = 'medium';
+        } else if (lower.includes('low') || lower.includes('minor') || lower.includes('consider')) {
+          severity = 'low';
+        }
+        // Extract bold label if present: **Label:** rest
+        const boldMatch = cleaned.match(/^\*\*(.+?)\*\*[:\s]*(.*)/);
+        const label = boldMatch ? boldMatch[1] : '';
+        const textContent = boldMatch ? boldMatch[2] : cleaned;
+        items.push({
+          icon: iconMap[type],
+          label,
+          text: textContent,
+          severity
+        });
+      }
+      return items.length > 0 ? items : [{ icon: iconMap[type], label: '', text: text.slice(0, 300), severity: 'info' }];
+    }
+
+    getSeverityDist(items: ParsedItem[]): {key: string, label: string, count: number}[] {
+      const counts: Record<string, number> = {};
+      items.forEach(i => counts[i.severity] = (counts[i.severity] || 0) + 1);
+      const labelMap: Record<string, string> = {high: 'High', medium: 'Medium', low: 'Low', info: 'Info'};
+      return Object.entries(counts)
+        .filter(([_, c]) => c > 0)
+        .map(([key, count]) => ({key, label: labelMap[key] || key, count}));
+    }
+
+    getPriorityDist(items: RecItem[]): {key: string, label: string, count: number}[] {
+      const counts: Record<string, number> = {};
+      items.forEach(i => {
+        const k = i.priority.toLowerCase();
+        counts[k] = (counts[k] || 0) + 1;
+      });
+      const labelMap: Record<string, string> = {high: 'High', medium: 'Medium', low: 'Low'};
+      return Object.entries(counts)
+        .filter(([_, c]) => c > 0)
+        .map(([key, count]) => ({key, label: labelMap[key] || key, count}));
+    }
+
+    getDonutGradient(items: ParsedItem[]): string {
+      const colorMap: Record<string, string> = {
+        high: '#dc2626', medium: '#d97706', low: '#059669', info: '#4f46e5'
+      };
+      const dist = this.getSeverityDist(items);
+      const total = items.length || 1;
+      let deg = 0;
+      const stops: string[] = [];
+      for (const d of dist) {
+        const start = deg;
+        deg += (d.count / total) * 360;
+        stops.push(`${colorMap[d.key] || '#94a3b8'} ${start}deg ${deg}deg`);
+      }
+      return stops.length ? `conic-gradient(${stops.join(', ')})` : 'conic-gradient(#e2e8f0 0deg 360deg)';
+    }
+
+    getRecDonutGradient(items: RecItem[]): string {
+      const colorMap: Record<string, string> = {high: '#dc2626', medium: '#ea580c', low: '#2563eb'};
+      const dist = this.getPriorityDist(items);
+      const total = items.length || 1;
+      let deg = 0;
+      const stops: string[] = [];
+      for (const d of dist) {
+        const start = deg;
+        deg += (d.count / total) * 360;
+        stops.push(`${colorMap[d.key] || '#94a3b8'} ${start}deg ${deg}deg`);
+      }
+      return stops.length ? `conic-gradient(${stops.join(', ')})` : 'conic-gradient(#e2e8f0 0deg 360deg)';
+    }
+
+    getOverallRisk(items: ParsedItem[]): string {
+      const high = items.filter(i => i.severity === 'high').length;
+      const total = items.length || 1;
+      if (high / total > 0.4) return 'high';
+      if (high / total > 0.15) return 'medium';
+      return 'low';
     }
 
     loadHealth() {
@@ -548,7 +758,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     applyDateFilter() {
         this.loadESGTrends();
-        this.generateAllIntelligence();
     }
 
     switchTab(tab: 'weekly' | 'monthly') {

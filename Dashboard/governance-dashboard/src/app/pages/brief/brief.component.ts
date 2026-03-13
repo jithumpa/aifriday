@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 
-interface MeetingNote {
-    id: number;
-    date: string;
+interface FileNote {
+    filename: string;
     title: string;
-    description?: string;
-    source: string;
+    preview: string;
+    content: string;
 }
 
 @Component({
@@ -27,44 +26,45 @@ interface MeetingNote {
         </div>
       </header>
 
-      <!-- Date Filter -->
+      <!-- Date Picker -->
       <div class="card">
         <h3 class="section-title">
-          <span class="material-icons">filter_list</span>
-          Filter by Date
+          <span class="material-icons">calendar_today</span>
+          Pick a Date
         </h3>
-        <select class="date-select" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange($event)" *ngIf="availableDates.length > 0">
-          <option [ngValue]="null" disabled>-- Select a date --</option>
-          <option *ngFor="let d of availableDates" [ngValue]="d">{{ formatDate(d) }}</option>
-        </select>
-        <div class="empty-state" *ngIf="availableDates.length === 0 && !loadingDates">
-          <span class="material-icons">event_busy</span>
-          <p>No meeting notes found. Upload notes via <strong>Data Ingestion</strong> page.</p>
+        <div class="date-row">
+          <input type="date" class="date-input" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange($event)">
+          <div class="available-dates" *ngIf="availableDates.length > 0">
+            <span class="hint">Available dates:</span>
+            <button *ngFor="let d of availableDates" class="date-chip" [class.active]="selectedDate === d" (click)="pickDate(d)">
+              {{ formatDate(d) }}
+            </button>
+          </div>
         </div>
-        <div class="loading-row" *ngIf="loadingDates">
-          <span class="material-icons spin">sync</span>
-          Loading...
+        <div class="empty-state" *ngIf="selectedDate && !loadingNotes && notes.length === 0">
+          <span class="material-icons">event_busy</span>
+          <p>No meeting notes for this date. Upload notes via <strong>Data Ingestion</strong>.</p>
         </div>
       </div>
 
       <!-- Meetings for selected date -->
-      <div class="card" *ngIf="selectedDate && filteredNotes.length > 0">
+      <div class="card" *ngIf="notes.length > 0">
         <h3 class="section-title">
           <span class="material-icons">groups</span>
           Meetings on {{ formatDate(selectedDate) }}
         </h3>
         <div class="meeting-list">
           <button
-            *ngFor="let note of filteredNotes"
+            *ngFor="let note of notes"
             class="meeting-item"
-            [class.selected]="selectedNote?.id === note.id"
+            [class.selected]="selectedNote?.filename === note.filename"
             (click)="selectNote(note)">
             <span class="material-icons meeting-icon">description</span>
             <div class="meeting-info">
               <span class="meeting-title">{{ note.title }}</span>
-              <span class="meeting-desc">{{ note.description }}</span>
+              <span class="meeting-desc">{{ note.preview }}</span>
             </div>
-            <span class="material-icons check-icon" *ngIf="selectedNote?.id === note.id">check_circle</span>
+            <span class="material-icons check-icon" *ngIf="selectedNote?.filename === note.filename">check_circle</span>
           </button>
         </div>
 
@@ -74,6 +74,14 @@ interface MeetingNote {
           <span class="material-icons" *ngIf="!loading">auto_awesome</span>
           {{ loading ? 'Summarizing...' : 'Summarize' }}
         </button>
+      </div>
+
+      <!-- Loading notes -->
+      <div class="card" *ngIf="loadingNotes">
+        <div class="loading-row">
+          <span class="material-icons spin">sync</span>
+          Loading meetings...
+        </div>
       </div>
 
       <!-- Summary Output -->
@@ -141,7 +149,13 @@ interface MeetingNote {
       }
     }
 
-    .date-select {
+    .date-row {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .date-input {
       width: 100%;
       padding: 12px 16px;
       border: 2px solid var(--gray-200);
@@ -149,13 +163,44 @@ interface MeetingNote {
       font-size: 15px;
       font-family: inherit;
       background: white;
-      cursor: pointer;
       transition: border-color 0.2s;
-      appearance: auto;
 
       &:focus {
         outline: none;
         border-color: var(--primary);
+      }
+    }
+
+    .available-dates {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+
+      .hint {
+        font-size: 13px;
+        color: var(--gray-500);
+      }
+    }
+
+    .date-chip {
+      padding: 6px 14px;
+      border: 1px solid var(--gray-200);
+      border-radius: 20px;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: var(--primary);
+        background: rgba(37, 99, 235, 0.05);
+      }
+
+      &.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
       }
     }
 
@@ -194,12 +239,17 @@ interface MeetingNote {
       .meeting-title {
         font-weight: 600;
         font-size: 15px;
+        text-transform: capitalize;
       }
 
       .meeting-desc {
         font-size: 13px;
         color: var(--gray-500);
         line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 600px;
       }
 
       .check-icon {
@@ -330,55 +380,59 @@ interface MeetingNote {
 })
 export class BriefComponent implements OnInit {
     availableDates: string[] = [];
-    selectedDate: string | null = null;
-    allNotes: MeetingNote[] = [];
-    filteredNotes: MeetingNote[] = [];
-    selectedNote: MeetingNote | null = null;
+    selectedDate = '';
+    notes: FileNote[] = [];
+    selectedNote: FileNote | null = null;
     loading = false;
-    loadingDates = false;
+    loadingNotes = false;
     summary: string | null = null;
     error: string | null = null;
 
     constructor(private api: ApiService) { }
 
     ngOnInit() {
-        this.loadAvailableDates();
+        this.api.getNoteDates().subscribe({
+            next: (res) => { this.availableDates = res.dates; },
+            error: () => {}
+        });
     }
 
-    loadAvailableDates() {
-        this.loadingDates = true;
-        this.api.listNotes().subscribe({
-            next: (res) => {
-                this.availableDates = res.available_dates;
-                this.allNotes = res.notes;
-                this.loadingDates = false;
-            },
-            error: () => {
-                this.loadingDates = false;
-            }
-        });
+    pickDate(date: string) {
+        this.selectedDate = date;
+        this.onDateChange(date);
     }
 
     onDateChange(date: string) {
         this.selectedNote = null;
         this.summary = null;
         this.error = null;
-        this.filteredNotes = this.allNotes.filter(n => n.date === date);
+        this.notes = [];
+        if (!date) return;
+        this.loadingNotes = true;
+        this.api.getNotesByDate(date).subscribe({
+            next: (res) => {
+                this.notes = res.notes;
+                this.loadingNotes = false;
+            },
+            error: () => {
+                this.loadingNotes = false;
+            }
+        });
     }
 
-    selectNote(note: MeetingNote) {
+    selectNote(note: FileNote) {
         this.selectedNote = note;
         this.summary = null;
         this.error = null;
     }
 
     summarize() {
-        if (!this.selectedNote) return;
+        if (!this.selectedNote || !this.selectedDate) return;
         this.loading = true;
         this.error = null;
         this.summary = null;
 
-        this.api.summarize(this.selectedNote.id).subscribe({
+        this.api.summarizeFileNote(this.selectedDate, this.selectedNote.filename).subscribe({
             next: (res) => {
                 this.summary = res.summary;
                 this.loading = false;

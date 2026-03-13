@@ -7,10 +7,13 @@ from db import engine, SessionLocal
 from ingest import ingest_metrics_csv, ingest_initiatives_csv, ingest_notes
 from brief import generate_weekly_brief
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+import asyncio
 import datetime
 import pandas as pd
 import os
+import re
+import glob
 
 # Import agentic features
 from agent import (
@@ -34,7 +37,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 # Pydantic models for API
 class LatestResponse(BaseModel):
-    last_brief_generated: datetime.datetime | None
+    last_brief_generated: Optional[datetime.datetime]
 
 class ChatRequest(BaseModel):
     question: str
@@ -109,6 +112,152 @@ async def upload_notes(text: str = Form(...), source: str = Form('meeting_notes.
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# ============ FILE-BASED MEETING NOTES ============
+
+MEETING_NOTES_DIR = os.path.join(os.path.dirname(__file__), "meeting_notes")
+
+
+@app.post('/notes/file-upload', tags=["Meeting Notes"])
+async def upload_notes_to_folder(
+    text: str = Form(...),
+    date: str = Form(...),
+    title: str = Form("meeting_notes"),
+):
+    """Save meeting notes text to meeting_notes/{date}/ folder."""
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    # Sanitize title for filename
+    safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_")[:80]
+    if not safe_title:
+        safe_title = "meeting_notes"
+    folder = os.path.join(MEETING_NOTES_DIR, date)
+    os.makedirs(folder, exist_ok=True)
+    filepath = os.path.join(folder, f"{safe_title}.txt")
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(text)
+    # Also ingest into DB + vector store for RAG
+    try:
+        note_id = ingest_notes(text, safe_title)
+        try:
+            add_meeting_notes(text, safe_title, note_id)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return {"status": "ok", "date": date, "file": f"{safe_title}.txt"}
+
+
+@app.get('/notes/dates', tags=["Meeting Notes"])
+async def list_note_dates():
+    """List all dates that have meeting notes folders."""
+    if not os.path.isdir(MEETING_NOTES_DIR):
+        return {"dates": []}
+    dates = sorted(
+        [d for d in os.listdir(MEETING_NOTES_DIR)
+         if os.path.isdir(os.path.join(MEETING_NOTES_DIR, d)) and re.match(r"^\d{4}-\d{2}-\d{2}$", d)],
+        reverse=True,
+    )
+    return {"dates": dates}
+
+
+@app.get('/notes/by-date/{date}', tags=["Meeting Notes"])
+async def get_notes_by_date(date: str):
+    """List meeting note files for a given date."""
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    folder = os.path.join(MEETING_NOTES_DIR, date)
+    if not os.path.isdir(folder):
+        return {"date": date, "notes": []}
+    notes = []
+    for fname in sorted(os.listdir(folder)):
+        if not fname.endswith(".txt"):
+            continue
+        filepath = os.path.join(folder, fname)
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        title = fname.replace(".txt", "").replace("_", " ")
+        notes.append({
+            "filename": fname,
+            "title": title,
+            "preview": content[:200],
+            "content": content,
+        })
+    return {"date": date, "notes": notes}
+
+
+@app.post('/notes/summarize-file', tags=["Meeting Notes"])
+async def summarize_file_note(date: str = Form(...), filename: str = Form(...)):
+    """Summarize a meeting note file from the meeting_notes folder."""
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+    safe_filename = os.path.basename(filename)
+    filepath = os.path.join(MEETING_NOTES_DIR, date, safe_filename)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Meeting note file not found")
+    with open(filepath, "r", encoding="utf-8") as f:
+        notes_text = f.read()
+
+    # Include initiatives context
+    db = SessionLocal()
+    try:
+        initiatives = db.query(Initiative).all()
+        init_context = ""
+        if initiatives:
+            today = datetime.date.today()
+            init_lines = []
+            for i in initiatives:
+                overdue = (
+                    i.due_date and i.due_date < today
+                    and (i.status or "").lower() not in ["done", "completed", "closed"]
+                )
+                marker = " ** OVERDUE **" if overdue else ""
+                init_lines.append(
+                    f"  [{i.id}] {i.name} | Owner: {i.owner} | Pillar: {i.pillar} "
+                    f"| Status: {i.status} | Due: {i.due_date}{marker}"
+                )
+            init_context = "\n\nACTIVE INITIATIVES:\n" + "\n".join(init_lines)
+    finally:
+        db.close()
+
+    prompt = (
+        "You are GovernIQ, an AI governance assistant. Summarize the following meeting notes "
+        "into EXACTLY 5 concise, executive-ready bullet points.\n\n"
+        "Rules:\n"
+        "- Return EXACTLY 5 bullet points, no more, no less.\n"
+        "- Each bullet should be 1-2 sentences maximum.\n"
+        "- Focus on key decisions, action items, risks, blockers, and important updates.\n"
+        "- Reference specific people, initiative IDs, and dates where relevant.\n"
+        "- Start each bullet with a bold category tag like **Decision:**, **Action:**, **Risk:**, **Blocker:**, **Update:**\n\n"
+        f"MEETING NOTES:\n{notes_text}"
+        f"{init_context}"
+    )
+
+    try:
+        from agent import get_client
+        from config import OPENAI_MODEL
+        openai_client = get_client()
+        response = openai_client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "You are GovernIQ, an executive governance summarization assistant. Always produce exactly 5 bullet points."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+        )
+        summary = response.choices[0].message.content
+        return {"success": True, "summary": summary}
+    except Exception as e:
+        lines = notes_text.split("\n")
+        key_lines = [
+            l.strip() for l in lines
+            if any(kw in l.lower() for kw in ["action", "decision", "blocker", "risk", "update"])
+        ]
+        if len(key_lines) < 5:
+            key_lines += [l.strip() for l in lines if l.strip() and l.strip() not in key_lines][:5 - len(key_lines)]
+        fallback = "\n".join(f"• {a}" for a in key_lines[:5])
+        return {"success": True, "summary": fallback, "error": str(e)}
+
+
 # ============ BRIEF GENERATION ENDPOINTS ============
 
 @app.post('/generate', tags=["Brief Generation"])
@@ -126,7 +275,7 @@ async def generate(week_start: str, use_ai: bool = False):
     
     if use_ai:
         # AI-powered brief generation
-        result = generate_ai_brief(dt.date())
+        result = await asyncio.to_thread(generate_ai_brief, dt.date())
         if result["success"]:
             # Store brief in DB
             db = SessionLocal()
@@ -168,7 +317,7 @@ async def chat(request: ChatRequest):
     - "Who owns the most overdue initiatives?"
     """
     data_summary = _get_data_summary()
-    result = chat_query(request.question, data_context=data_summary)
+    result = await asyncio.to_thread(chat_query, request.question, data_context=data_summary)
     return ChatResponse(
         success=result["success"],
         response=result["response"],
@@ -189,7 +338,7 @@ async def analyze_init(initiative_id: str):
     - Context from meeting notes
     - Recommended actions
     """
-    result = analyze_initiative(initiative_id)
+    result = await asyncio.to_thread(analyze_initiative, initiative_id)
     return JSONResponse(content=result)
 
 @app.get('/analyze/anomalies', tags=["Agentic AI"])
@@ -203,7 +352,7 @@ async def analyze_anomalies():
     - Search for context
     - Suggest follow-up actions
     """
-    result = detect_and_explain_anomalies()
+    result = await asyncio.to_thread(detect_and_explain_anomalies)
     return JSONResponse(content=result)
 
 
@@ -305,7 +454,7 @@ async def dashboard_intelligence(
         raise HTTPException(status_code=400, detail='as_of_date must be YYYY-MM-DD')
 
     if use_ai:
-        ai_result = generate_dashboard_intelligence(dt)
+        ai_result = await asyncio.to_thread(generate_dashboard_intelligence, dt)
         if ai_result.get("success"):
             intelligence = ai_result.get("intelligence", {})
             return DashboardIntelligenceResponse(
@@ -792,34 +941,107 @@ async def seed_demo_notes():
         db.close()
 
 
+# ============ DATA RESET ENDPOINT ============
+
+@app.delete('/data/reset', tags=["Data Management"])
+async def reset_all_data():
+    """
+    Clear ALL uploaded data: metrics, initiatives, notes, briefs,
+    meeting_notes folders, and the vector store.
+    """
+    db = SessionLocal()
+    try:
+        del_metrics = db.query(Metric).delete()
+        del_inits = db.query(Initiative).delete()
+        del_notes = db.query(Note).delete()
+        del_briefs = db.query(Brief).delete()
+        db.commit()
+    finally:
+        db.close()
+
+    # Clear meeting_notes folders
+    import shutil
+    if os.path.isdir(MEETING_NOTES_DIR):
+        shutil.rmtree(MEETING_NOTES_DIR)
+    os.makedirs(MEETING_NOTES_DIR, exist_ok=True)
+
+    # Clear vector store
+    try:
+        from vector_store import get_chroma_client
+        client = get_chroma_client()
+        for col_name in [c.name for c in client.list_collections()]:
+            client.delete_collection(col_name)
+    except Exception:
+        pass
+
+    return {
+        "status": "ok",
+        "deleted": {
+            "metrics": del_metrics,
+            "initiatives": del_inits,
+            "notes": del_notes,
+            "briefs": del_briefs,
+        },
+        "message": "All data cleared. You can now upload fresh data."
+    }
+
+
+# ============ INITIATIVES LIST ENDPOINT ============
+
+@app.get('/initiatives/list', tags=["Initiatives"])
+async def list_initiatives():
+    """Return all initiatives from the database with is_overdue flag."""
+    db = SessionLocal()
+    try:
+        inits = db.query(Initiative).all()
+        today = datetime.date.today()
+        results = []
+        for i in inits:
+            is_overdue = (
+                i.due_date is not None
+                and i.due_date < today
+                and (i.status or "").lower() not in ["done", "completed", "closed"]
+            )
+            results.append({
+                "id": i.id,
+                "name": i.name,
+                "owner": i.owner,
+                "pillar": i.pillar,
+                "status": i.status,
+                "due_date": i.due_date.isoformat() if i.due_date else None,
+                "last_update": i.last_update.isoformat() if i.last_update else None,
+                "is_overdue": is_overdue,
+            })
+        return {"initiatives": results}
+    finally:
+        db.close()
+
+
 # ============ METRICS ENDPOINT ============
 
 @app.get('/metrics/{metric_type}', tags=["Metrics"])
-async def get_metrics(metric_type: str = Path(..., regex="^(dei|esg|initiatives)$")):
+async def get_metrics(metric_type: str = Path(..., regex="^(dei|esg)$")):
     """
-    Get metrics data from CSV files. metric_type can be 'dei', 'esg', or 'initiatives'.
-    Returns the CSV content as JSON, formatted for frontend Metric interface.
+    Get metrics data from the database. metric_type can be 'dei' or 'esg'.
+    Returns uploaded metrics as JSON.
     """
-    base_path = os.path.join(os.path.dirname(__file__), 'sample_data')
-    file_map = {
-        'dei': 'dei_metrics.csv',
-        'esg': 'esg_metrics.csv',
-    }
-    if metric_type not in file_map:
-        raise HTTPException(status_code=404, detail="Invalid metric type")
-    file_path = os.path.join(base_path, file_map[metric_type])
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    df = pd.read_csv(file_path)
-    # Add an auto-incremental id for frontend compatibility
-    df = df.reset_index().rename(columns={'index': 'id'})
-    df['source'] = metric_type
-    # Ensure correct types for frontend
-    df['id'] = df['id'].astype(int)
-    df['value'] = df['value'].astype(float)
-    # Only return the required fields for the Metric interface
-    result = df[['id', 'source', 'date', 'org_unit', 'metric_name', 'value', 'unit']].to_dict(orient='records')
-    return result
+    db = SessionLocal()
+    try:
+        rows = db.query(Metric).filter(Metric.source == metric_type).order_by(Metric.date).all()
+        result = []
+        for r in rows:
+            result.append({
+                "id": r.id,
+                "source": r.source,
+                "date": r.date.isoformat() if r.date else None,
+                "org_unit": r.org_unit,
+                "metric_name": r.metric_name,
+                "value": float(r.value),
+                "unit": r.unit,
+            })
+        return result
+    finally:
+        db.close()
 
 @app.get('/metrics/esg/analytics', tags=["Metrics"])
 async def esg_analytics(
@@ -827,29 +1049,34 @@ async def esg_analytics(
     end_date: str = Query(None, description="End date in YYYY-MM-DD format")
 ):
     """
-    Analytics for ESG CO2 Emissions:
-    - Promedio diario de emisiones en un rango de fechas.
-    - Tendencia (incremento o decremento) semana a semana.
-    - Máximo y mínimo en el periodo.
-    - Reducción porcentual entre semanas consecutivas.
-    - Acumulado mensual de emisiones.
-    - Predicción para los próximos 7 días.
+    Analytics for ESG metrics from the database (uploaded data).
     """
-    import pandas as pd
     import numpy as np
-    from datetime import datetime
+    from datetime import datetime as dt_cls
     import calendar
-    import os
 
-    base_path = os.path.join(os.path.dirname(__file__), 'sample_data')
-    file_path = os.path.join(base_path, 'esg_metrics.csv')
-    df = pd.read_csv(file_path, parse_dates=['date'])
+    db = SessionLocal()
+    try:
+        query = db.query(Metric).filter(Metric.source == 'esg')
+        if start_date:
+            query = query.filter(Metric.date >= datetime.date.fromisoformat(start_date))
+        if end_date:
+            query = query.filter(Metric.date <= datetime.date.fromisoformat(end_date))
+        rows = query.order_by(Metric.date).all()
+    finally:
+        db.close()
 
-    # Filter by date range if provided
-    if start_date:
-        df = df[df['date'] >= pd.to_datetime(start_date)]
-    if end_date:
-        df = df[df['date'] <= pd.to_datetime(end_date)]
+    if not rows:
+        return {
+            'avg_daily': None, 'max': None, 'min': None,
+            'weekly_trend': [], 'weekly_pct_change': [],
+            'monthly_accumulated': [], 'predicted': [],
+        }
+
+    # Build a DataFrame from DB rows
+    data = [{"date": r.date, "value": float(r.value)} for r in rows]
+    df = pd.DataFrame(data)
+    df['date'] = pd.to_datetime(df['date'])
 
     # Promedio diario
     avg_daily = df['value'].mean() if not df.empty else None
@@ -916,7 +1143,7 @@ async def esg_analytics(
         if not df.empty:
             # Prepare data for regression: use date as ordinal for X
             df_sorted = df.sort_values('date')
-            X = df_sorted['date'].map(datetime.toordinal).values.reshape(-1, 1)
+            X = df_sorted['date'].map(pd.Timestamp.toordinal).values.reshape(-1, 1)
             y = df_sorted['value'].values
             model = LinearRegression()
             model.fit(X, y)

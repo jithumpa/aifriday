@@ -18,383 +18,237 @@ interface ChatMessage {
     standalone: true,
     imports: [CommonModule, FormsModule],
     template: `
-    <div class="chat-page">
-      <header class="page-header">
-        <div>
-          <h1>🤖 AI Governance Agent</h1>
-          <p>Ask questions about your sustainability and DEI data</p>
-        </div>
-      </header>
+    <div class="chat-page" [class.has-messages]="messages.length > 0">
 
-      <!-- Suggested Questions -->
-      <div class="suggestions" *ngIf="messages.length === 0">
-        <h3>Try asking:</h3>
-        <div class="suggestion-chips">
-          <button *ngFor="let q of suggestedQuestions" (click)="askQuestion(q)">
-            {{ q }}
-          </button>
-        </div>
+      <!-- Welcome screen (no messages yet) -->
+      <div class="welcome" *ngIf="messages.length === 0">
+        <h1>GovernIQ Chat</h1>
       </div>
 
       <!-- Chat Messages -->
-      <div class="chat-container">
-        <div class="messages" #messagesContainer>
-          <div *ngFor="let msg of messages" 
-               class="message" 
-               [class.user]="msg.role === 'user'"
-               [class.assistant]="msg.role === 'assistant'">
-            <div class="message-avatar">
-              <span class="material-icons">{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</span>
-            </div>
-            <div class="message-content">
-              <div class="message-text" [innerHTML]="renderMarkdown(msg.content)"></div>
-              <div class="message-meta">
-                <span>{{ msg.timestamp | date:'shortTime' }}</span>
-                <span *ngIf="msg.iterations">• {{ msg.iterations }} iterations</span>
-                <span *ngIf="msg.toolCalls?.length">• {{ msg.toolCalls?.length }} tools used</span>
-              </div>
-              <!-- Tool calls display -->
-              <div class="tool-calls-mini" *ngIf="msg.toolCalls?.length">
-                <span *ngFor="let tc of msg.toolCalls" class="tool-chip">
-                  {{ tc.tool }}
-                </span>
-              </div>
-            </div>
+      <div class="messages" #messagesContainer *ngIf="messages.length > 0">
+        <div *ngFor="let msg of messages" 
+             class="message" 
+             [class.user]="msg.role === 'user'"
+             [class.assistant]="msg.role === 'assistant'">
+          <div class="message-avatar">
+            <span class="material-icons">{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</span>
           </div>
-          
-          <!-- Loading indicator -->
-          <div class="message assistant" *ngIf="loading">
-            <div class="message-avatar">
-              <span class="material-icons">smart_toy</span>
+          <div class="message-content">
+            <div class="message-text" [innerHTML]="renderMarkdown(msg.content)"></div>
+            <div class="message-meta">
+              <span>{{ msg.timestamp | date:'shortTime' }}</span>
+              <span *ngIf="msg.iterations">· {{ msg.iterations }} iterations</span>
+              <span *ngIf="msg.toolCalls?.length">· {{ msg.toolCalls?.length }} tools used</span>
             </div>
-            <div class="message-content">
-              <div class="typing-indicator">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="message-meta">Thinking...</div>
+            <div class="tool-calls-mini" *ngIf="msg.toolCalls?.length">
+              <span *ngFor="let tc of msg.toolCalls" class="tool-chip">{{ tc.tool }}</span>
             </div>
           </div>
         </div>
-
-        <!-- Input Area -->
-        <div class="input-area">
-          <div class="input-wrapper">
-            <textarea 
-              class="chat-input"
-              [(ngModel)]="inputText"
-              (keydown)="onKeyDown($event)"
-              placeholder="Ask about ESG metrics, initiatives, trends, or anomalies..."
-              rows="1"
-              [disabled]="loading"
-            ></textarea>
-            <button class="send-btn" (click)="sendMessage()" [disabled]="!inputText.trim() || loading">
-              <span class="material-icons">send</span>
-            </button>
+        
+        <!-- Typing indicator -->
+        <div class="message assistant" *ngIf="loading">
+          <div class="message-avatar">
+            <span class="material-icons">smart_toy</span>
           </div>
-          <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
+          <div class="message-content">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+          </div>
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="quick-actions-bar">
-        <button (click)="askQuestion('Detect anomalies in the metrics data')">
-          <span class="material-icons">troubleshoot</span>
-          Detect Anomalies
-        </button>
-        <button (click)="askQuestion('What are the overdue initiatives?')">
-          <span class="material-icons">warning</span>
-          Overdue Items
-        </button>
-        <button (click)="askQuestion('Show me ESG metric trends')">
-          <span class="material-icons">trending_up</span>
-          ESG Trends
-        </button>
-        <button (click)="askQuestion('Summarize DEI performance')">
-          <span class="material-icons">diversity_3</span>
-          DEI Summary
-        </button>
+      <!-- Input bar (always visible at bottom) -->
+      <div class="input-bar">
+        <div class="input-wrapper">
+          <textarea 
+            class="chat-input"
+            [(ngModel)]="inputText"
+            (keydown)="onKeyDown($event)"
+            placeholder="Ask GovernIQ anything..."
+            rows="1"
+            [disabled]="loading"
+          ></textarea>
+          <button class="send-btn" (click)="sendMessage()" [disabled]="!inputText.trim() || loading">
+            <span class="material-icons">arrow_upward</span>
+          </button>
+        </div>
       </div>
     </div>
   `,
     styles: [`
     .chat-page {
-      max-width: 900px;
+      max-width: 820px;
       margin: 0 auto;
       height: calc(100vh - 48px);
       display: flex;
       flex-direction: column;
+      padding: 0 16px;
     }
     
-    .page-header {
-      margin-bottom: 24px;
-      
-      h1 { font-size: 28px; font-weight: 700; }
-      p { color: var(--gray-500); margin-top: 4px; }
-    }
-    
-    .suggestions {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow);
-      
-      h3 {
-        font-size: 14px;
-        color: var(--gray-500);
-        margin-bottom: 16px;
-      }
-    }
-    
-    .suggestion-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      
-      button {
-        padding: 10px 16px;
-        background: var(--gray-50);
-        border: 1px solid var(--gray-200);
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s;
-        
-        &:hover {
-          background: var(--primary);
-          color: white;
-          border-color: var(--primary);
-        }
-      }
-    }
-    
-    .chat-container {
+    /* ── Welcome (empty state) ── */
+    .welcome {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      background: white;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+      
+      h1 {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--gray-800, #1f2937);
+        letter-spacing: -0.5px;
+      }
     }
     
+    /* ── Messages ── */
     .messages {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 32px 0 16px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
     
     .message {
       display: flex;
       gap: 12px;
-      max-width: 85%;
+      max-width: 90%;
       
       &.user {
         align-self: flex-end;
         flex-direction: row-reverse;
         
-        .message-avatar {
-          background: var(--primary);
-        }
-        
+        .message-avatar { background: var(--primary, #2563eb); }
         .message-content {
-          background: var(--primary);
+          background: var(--primary, #2563eb);
           color: white;
-          border-radius: 18px 18px 4px 18px;
+          border-radius: 20px 20px 4px 20px;
         }
-        
-        .message-meta {
-          text-align: right;
-          color: rgba(255,255,255,0.7);
-        }
+        .message-meta { text-align: right; color: rgba(255,255,255,0.7); }
       }
       
       &.assistant {
         align-self: flex-start;
         
-        .message-avatar {
-          background: linear-gradient(135deg, #10b981, #059669);
-        }
-        
+        .message-avatar { background: linear-gradient(135deg, #10b981, #059669); }
         .message-content {
-          background: var(--gray-50);
-          border-radius: 18px 18px 18px 4px;
+          background: #f7f7f8;
+          border-radius: 20px 20px 20px 4px;
         }
       }
     }
     
     .message-avatar {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       
-      .material-icons {
-        font-size: 20px;
-        color: white;
-      }
+      .material-icons { font-size: 18px; color: white; }
     }
     
     .message-content {
       padding: 12px 16px;
       
       .message-text {
-        line-height: 1.5;
-        
+        line-height: 1.6;
+        font-size: 15px;
         h1, h2, h3 { margin: 12px 0 8px; }
         ul, ol { padding-left: 20px; margin: 8px 0; }
         li { margin: 4px 0; }
         strong { font-weight: 600; }
+        code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-size: 13px; }
       }
     }
     
     .message-meta {
       font-size: 11px;
-      color: var(--gray-400);
-      margin-top: 8px;
+      color: var(--gray-400, #9ca3af);
+      margin-top: 6px;
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
     
     .tool-calls-mini {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
     }
-    
     .tool-chip {
-      font-size: 11px;
-      padding: 2px 8px;
-      background: rgba(59, 130, 246, 0.1);
-      color: var(--primary);
+      font-size: 11px; padding: 2px 8px;
+      background: rgba(59,130,246,0.1); color: var(--primary, #2563eb);
       border-radius: 10px;
     }
     
     .typing-indicator {
-      display: flex;
-      gap: 4px;
-      padding: 8px 0;
-      
+      display: flex; gap: 4px; padding: 8px 0;
       span {
-        width: 8px;
-        height: 8px;
-        background: var(--gray-400);
-        border-radius: 50%;
-        animation: bounce 1.4s infinite ease-in-out;
-        
+        width: 8px; height: 8px; background: var(--gray-400, #9ca3af);
+        border-radius: 50%; animation: bounce 1.4s infinite ease-in-out;
         &:nth-child(1) { animation-delay: -0.32s; }
         &:nth-child(2) { animation-delay: -0.16s; }
       }
     }
-    
     @keyframes bounce {
       0%, 80%, 100% { transform: scale(0); }
       40% { transform: scale(1); }
     }
     
-    .input-area {
-      padding: 16px 24px;
-      border-top: 1px solid var(--gray-100);
+    /* ── Input bar ── */
+    .input-bar {
+      padding: 16px 0 24px;
     }
     
     .input-wrapper {
       display: flex;
-      gap: 12px;
       align-items: flex-end;
+      background: #f4f4f4;
+      border: 1px solid #e0e0e0;
+      border-radius: 26px;
+      padding: 6px 6px 6px 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      
+      &:focus-within {
+        border-color: var(--primary, #2563eb);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        background: white;
+      }
     }
     
     .chat-input {
       flex: 1;
-      padding: 12px 16px;
-      border: 1px solid var(--gray-300);
-      border-radius: 24px;
+      border: none;
+      background: transparent;
       resize: none;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.5;
-      max-height: 120px;
+      padding: 8px 0;
+      max-height: 150px;
       
-      &:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      }
+      &:focus { outline: none; }
+      &::placeholder { color: #aaa; }
     }
     
     .send-btn {
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: var(--primary);
+      background: var(--primary, #2563eb);
       border: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      flex-shrink: 0;
+      transition: background 0.2s;
       
-      .material-icons {
-        color: white;
-        font-size: 20px;
-      }
+      .material-icons { color: white; font-size: 20px; }
       
-      &:hover:not(:disabled) {
-        background: var(--primary-dark);
-        transform: scale(1.05);
-      }
-      
-      &:disabled {
-        background: var(--gray-300);
-        cursor: not-allowed;
-      }
-    }
-    
-    .input-hint {
-      font-size: 11px;
-      color: var(--gray-400);
-      margin-top: 8px;
-      text-align: center;
-    }
-    
-    .quick-actions-bar {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-      padding: 16px;
-      background: white;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      
-      button {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px;
-        background: var(--gray-50);
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius);
-        cursor: pointer;
-        font-size: 13px;
-        transition: all 0.2s;
-        
-        .material-icons {
-          font-size: 18px;
-          color: var(--primary);
-        }
-        
-        &:hover {
-          background: white;
-          border-color: var(--primary);
-        }
-      }
+      &:hover:not(:disabled) { background: #1d4ed8; }
+      &:disabled { background: #d1d5db; cursor: not-allowed; }
     }
   `]
 })
@@ -402,15 +256,6 @@ export class ChatComponent implements OnInit {
     messages: ChatMessage[] = [];
     inputText = '';
     loading = false;
-
-    suggestedQuestions = [
-        'What are the top ESG risks this week?',
-        'Show me overdue initiatives',
-        'Analyze DEI trends for Global',
-        'Why is INIT-2 at risk?',
-        'What decisions need executive attention?',
-        'Detect any anomalies in metrics'
-    ];
 
     constructor(
         private api: ApiService,

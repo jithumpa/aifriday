@@ -1,7 +1,19 @@
 date,org_unit,metric_name,value,unit
-2026-03-01,Global,Gender Balance,48,percent
-2026-03-03,Global,Gender Balance,49,percent
-2026-03-05,Global,Gender Balance,47,percent
-2026-02-22,Global,Gender Balance,46,percent
-2026-02-24,Global,Gender Balance,47,percent
-2026-02-26,Global,Gender Balance,48,percent
+2025-10-01,TCS Mexico,Gender Balance,51,percent
+2025-11-01,TCS Mexico,Gender Balance,50,percent
+2025-12-01,TCS Mexico,Gender Balance,49,percent
+2026-01-01,TCS Mexico,Gender Balance,48,percent
+2026-02-01,TCS Mexico,Gender Balance,47,percent
+2026-03-01,TCS Mexico,Gender Balance,47,percent
+2025-10-01,TCS Mexico,AI Training Completion,0,percent
+2025-11-01,TCS Mexico,AI Training Completion,2,percent
+2025-12-01,TCS Mexico,AI Training Completion,5,percent
+2026-01-01,TCS Mexico,AI Training Completion,10,percent
+2026-02-01,TCS Mexico,AI Training Completion,13,percent
+2026-03-01,TCS Mexico,AI Training Completion,15,percent
+2025-10-01,TCS Mexico,Employee Engagement,76,percent
+2025-11-01,TCS Mexico,Employee Engagement,77,percent
+2025-12-01,TCS Mexico,Employee Engagement,79,percent
+2026-01-01,TCS Mexico,Employee Engagement,80,percent
+2026-02-01,TCS Mexico,Employee Engagement,82,percent
+2026-03-01,TCS Mexico,Employee Engagement,83,percent

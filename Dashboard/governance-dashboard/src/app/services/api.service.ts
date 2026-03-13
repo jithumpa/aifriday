@@ -150,4 +150,45 @@ export class ApiService {
             body
         );
     }
+
+    // ---- File-based meeting notes ----
+
+    // Upload meeting notes to a date folder
+    uploadNotesToFolder(text: string, date: string, title: string): Observable<{ status: string; date: string; file: string }> {
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('date', date);
+        formData.append('title', title);
+        return this.http.post<{ status: string; date: string; file: string }>(`${this.baseUrl}/notes/file-upload`, formData);
+    }
+
+    // Get all dates that have meeting notes
+    getNoteDates(): Observable<{ dates: string[] }> {
+        return this.http.get<{ dates: string[] }>(`${this.baseUrl}/notes/dates`);
+    }
+
+    // Get meeting notes for a specific date
+    getNotesByDate(date: string): Observable<{ date: string; notes: { filename: string; title: string; preview: string; content: string }[] }> {
+        return this.http.get<{ date: string; notes: { filename: string; title: string; preview: string; content: string }[] }>(
+            `${this.baseUrl}/notes/by-date/${encodeURIComponent(date)}`
+        );
+    }
+
+    // Summarize a file-based meeting note
+    summarizeFileNote(date: string, filename: string): Observable<{ success: boolean; summary: string }> {
+        const formData = new FormData();
+        formData.append('date', date);
+        formData.append('filename', filename);
+        return this.http.post<{ success: boolean; summary: string }>(`${this.baseUrl}/notes/summarize-file`, formData);
+    }
+
+    // Get initiatives list from DB
+    getInitiativesList(): Observable<{ initiatives: any[] }> {
+        return this.http.get<{ initiatives: any[] }>(`${this.baseUrl}/initiatives/list`);
+    }
+
+    // Reset all data
+    resetData(): Observable<{ status: string; deleted: any; message: string }> {
+        return this.http.delete<{ status: string; deleted: any; message: string }>(`${this.baseUrl}/data/reset`);
+    }
 }

@@ -14,14 +14,14 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "query_metrics",
-            "description": "Query ESG or DEI metrics from the database. Use this to get metric values, trends, and data for analysis.",
+            "description": "Query metrics from the database. CSR/Sustainability metrics have source='esg'. HR/Workforce metrics have source='dei'. IMPORTANT: When asked about CSR, use source='esg'. When asked about HR/Workforce, use source='dei'. Only use 'all' if explicitly asked for both.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "source": {
                         "type": "string",
                         "enum": ["esg", "dei", "all"],
-                        "description": "Filter by metric source: 'esg', 'dei', or 'all'"
+                        "description": "Filter by source: 'esg' for CSR/Sustainability, 'dei' for HR/Workforce, 'all' for both. Always specify the correct source based on the user's question."
                     },
                     "metric_name": {
                         "type": "string",

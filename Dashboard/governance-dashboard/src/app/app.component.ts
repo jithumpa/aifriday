@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
             <span class="logo-icon">🌱</span>
             <span class="logo-text">GovernIQ</span>
           </div>
-          <span class="logo-subtitle">Sustainability & DEI</span>
+          <span class="logo-subtitle">CSR & HR</span>
         </div>
         
         <nav class="sidebar-nav">
@@ -37,7 +37,7 @@ import { CommonModule } from '@angular/common';
           </a>
           <a routerLink="/initiatives" routerLinkActive="active" class="nav-item">
             <span class="material-icons">task_alt</span>
-            <span>Initiatives</span>
+            <span>Campaigns</span>
           </a>
         </nav>
         
